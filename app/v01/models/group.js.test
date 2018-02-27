@@ -1,0 +1,9 @@
+var mongoose     = require('mongoose');
+var Schema       = mongoose.Schema;
+
+var groupSchema   = new Schema({
+    name: String, 
+    users : [{ type : mongoose.Schema.ObjectId, ref : 'users' }]
+}, { collection: 'group' });
+
+module.exports = mongoose.model('group', groupSchema);
