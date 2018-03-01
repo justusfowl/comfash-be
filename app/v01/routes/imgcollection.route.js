@@ -70,6 +70,9 @@ router.route('/:collectionId/session')
 
 router.route('/:collectionId/session/:sessionId')
 
+    .get(imgCollectionCtrl.listQry)
+
+    // get specific data on session for sessionId
     .post(imageCtrl.create)
 
 router.route('/:collectionId/session/:sessionId/comment')

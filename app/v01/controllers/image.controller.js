@@ -5,6 +5,8 @@ const uuidv1 = require('uuid/v1');
 
 const Op = Sequelize.Op;
 
+var cnt = 1;
+
 function create(req, res){
 
     let sessionId = req.params.sessionId;
@@ -13,6 +15,9 @@ function create(req, res){
     var path ='public/img/';
 
     const filename = uuidv1();
+
+    //const filename = cnt.toString(); 
+    cnt++;
 
     var optionalObj = {'fileName': filename, 'type':'jpeg'};
         
@@ -27,7 +32,6 @@ function create(req, res){
         sessionId: sessionId
     }).save()
       .then(anotherTask => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
         console.log("after save"); 
         res.json(image);
       })

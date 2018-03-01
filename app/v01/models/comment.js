@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     commentCreated: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: true
     },
     xRatio: {
         type: DataTypes.FLOAT,

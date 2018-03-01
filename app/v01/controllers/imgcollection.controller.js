@@ -4,40 +4,6 @@ const Op = Sequelize.Op;
 var _ = require("lodash");
 
 
-function list (req,res) {
-
-    if (req.params.collectionId){
-        models.tblcollections.findAll({
-            where: {
-                collectionId: req.params.collectionId
-              }
-        }).then(function(collection) {
-            if (collection) {				
-                res.json(collection);
-            } else {
-                res.send(401, "User not found");
-            }
-            }, function(error) {
-                
-            res.send("User not found");
-        });
-    }else{
-
-        models.tblcollections.findAll({}).then(function(collection) {
-            if (collection) {				
-                res.json(collection);
-            } else {
-                res.send(401, "User not found");
-            }
-            }, function(error) {
-                
-            res.send("User not found");
-        });
-
-    }
-}
-
-
 function addToArray (obj, key, array){
 
     if (obj[key]!=null){
@@ -47,13 +13,20 @@ function addToArray (obj, key, array){
 
 
 function listQry (req,res) {
-
+    
     var whereStr = ''; 
     var qryOption; 
 
     if (req.params.collectionId){
+
         whereStr = ' WHERE c.collectionId = ?'; 
         qryOption = { raw: true, replacements: [req.params.collectionId], type: models.sequelize.QueryTypes.SELECT}; 
+
+        if (req.params.sessionId){
+            whereStr += " AND s.sessionId = ? "
+            qryOption.replacements.push(req.params.sessionId);
+        }
+         
     }else{
         qryOption = { raw: true, type: models.sequelize.QueryTypes.SELECT}; 
     }
@@ -72,7 +45,7 @@ function listQry (req,res) {
     FROM tblcollections c\
     LEFT JOIN tblsessions s on s.collectionId = c.collectionId\
     LEFT JOIN tblimages i on s.sessionId = i.sessionId\
-    LEFT JOIN tblcomments co on i.imageId = co.commentId ' + whereStr +
+    LEFT JOIN tblcomments co on i.imageId = co.imageId ' + whereStr +
     ' ORDER BY c.collectionId, s.sessionId, i.imageId, co.commentId;';
 
     models.sequelize.query(
@@ -187,11 +160,14 @@ function create(req, res){
 
     const collection = models.tblcollections.build({
         collectionTitle : req.body.collectionTitle, 
-        userId : "uli@blubb" // HIER MUSS NOCH die userID aus dem token gezogen werden 
+        userId : req.auth.userId
       }).save()
       .then(anotherTask => {
         // you can now access the currently saved task with the variable anotherTask... nice!
         console.log("after save"); 
+
+        req.io.emit('newCollection', "new collection created: " + req.body.collectionTitle);
+
         res.json(collection);
       })
       .catch(error => {
@@ -221,4 +197,4 @@ function deleteItem(req, res){
 
 }
 
-module.exports =   { list, listQry, create, deleteItem };
+module.exports =   { listQry, create, deleteItem };

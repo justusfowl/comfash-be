@@ -4,19 +4,17 @@ const Op = Sequelize.Op;
 
 function create(req, res){
 
-    let imageId = req.params.imageId;
-
     const comment = models.tblcomments.build({
         commentText: req.body.commentText,
         xRatio: req.body.xRatio,
         yRatio: req.body.yRatio,
-        imageId: imageId,
-        userId: req.body.userId
+        imageId: req.body.imageId,
+        userId: req.auth.userId
     }).save()
       .then(anotherTask => {
         // you can now access the currently saved task with the variable anotherTask... nice!
         console.log("after save"); 
-        res.json(comment);
+        res.json(anotherTask);
       })
       .catch(error => {
         // Ooops, do some error-handling

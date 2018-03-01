@@ -20,16 +20,40 @@ var routes      = require('./app/v01/routes/index.route');
 
 const multer = require('multer');
 const fileType = require('file-type');
-const fs = require('fs');
 
-const uuidv1 = require('uuid/v1');
-// uuidv1(); // ⇨ 'f64f2940-fae4-11e7-8c5f-ef356f279131'
 
-let newUUID = uuidv1(); 
+var server = require('http').createServer(app);
+
+var io = require('socket.io')(server);
+
+// middleware attachment of io instance to request
+app.use(function(req,res,next){
+	req.io = io;
+	next();
+});
+
+app.get('/socket', function(req, res){
+	res.sendFile(__dirname + '/testIO.html');
+});
+
+io.on('connection', function(socket){
+	console.log('a user CONNECTED');
+	console.log(socket)
+	console.log('a user CONNECTED END');
+});
+
+io.on('disconnect', function(socket){
+	console.log('a user disconnected');
+	console.log(socket)
+	console.log('a user disconnected END');
+});
+
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(bodyParser({limit: '50mb'}));
+
+app.use(bodyParser.urlencoded({ extended: true, limit: '200mb' }));
 app.use(bodyParser.json());
 
 app.use(cors());
@@ -97,6 +121,6 @@ app.use('/api/v' + config.APIVersion, routes);
 
 // START THE SERVER
 // =============================================================================
-app.listen(port);
+server.listen(port);
 
 console.log('ComfashBE application running on port: ' + port);
