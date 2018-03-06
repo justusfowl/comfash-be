@@ -23,8 +23,10 @@
         "mysql2": "^1.5.2",
         "sequelize": "^4.34.0",
         "socket.io": "^2.0.4",
+        "socketio-jwt": "^4.5.0",
         "underscore": "^1.8.3",
         "uuid": "^3.2.1",
+        "videoshow": "^0.1.11",
         "zlib": "^1.0.5"
     }
 }

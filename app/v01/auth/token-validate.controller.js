@@ -24,4 +24,8 @@ function verifyToken(req, res, next) {
 
 }
 
-module.exports = verifyToken;
+function verifyTokenSync (token){
+  return jwt.verify(token, config.auth.jwtSecret);
+}
+
+module.exports = { verifyToken, verifyTokenSync } ;

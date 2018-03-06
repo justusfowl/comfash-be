@@ -1,7 +1,21 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+    
+const multer = require('multer');
 
+var config  = require('../../config/config');
+
+var storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+	  cb(null, config.baseDir + '/public/v')
+	},
+	filename: function (req, file, cb) {
+	  cb(null, file.fieldname + '-' + Date.now() + ".mp4")
+	}
+  })
+
+var uploadVideo = multer({ storage: storage })
 
 function list (req,res) {
 
@@ -24,8 +38,15 @@ function list (req,res) {
 
 function create(req, res){
 
+    var filename = req.file.filename;
+
     const session = models.tblsessions.build({
-        collectionId : req.params.collectionId
+        collectionId : req.params.collectionId, 
+        sessionItemPath : "/v/" + req.file.filename, 
+        sessionItemType : "video/mp4", 
+        sessionThumbnailPath : "not implemented", 
+        width: 100, 
+        height: 100
       }).save()
       .then(anotherTask => {
         // you can now access the currently saved task with the variable anotherTask... nice!
@@ -37,7 +58,7 @@ function create(req, res){
         console.log(error); 
         res.send(500, error);
       })
-
 }
 
-module.exports =   { list, create };
+
+module.exports =   { list, create, uploadVideo };

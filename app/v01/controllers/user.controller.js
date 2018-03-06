@@ -14,26 +14,16 @@ function list (req,res) {
     });
 }
 
-function create(req, res){
+function listGroups (req,res) {
 
-    const user = models.tblusers.build({
-        userName: req.body.userName,
-        userId : req.body.userId, 
-        password: req.body.password, // here change to hash + salt
-        salt: "noch kein salt vergeben", 
-        userBirthDate: new Date()
-      }).save()
-      .then(anotherTask => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
-        console.log("after save"); 
-        res.json(user);
-      })
-      .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-      })
+    let testGroups = [{"groupId" : 1},{"groupId" : 5}]
+    res.json(testGroups);
 
 }
 
-module.exports =   { list, create };
+function socketGroups (userId){
+
+}
+
+
+module.exports = { list, listGroups};

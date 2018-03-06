@@ -8,7 +8,7 @@ function create(req, res){
         commentText: req.body.commentText,
         xRatio: req.body.xRatio,
         yRatio: req.body.yRatio,
-        imageId: req.body.imageId,
+        sessionId: req.body.sessionId,
         userId: req.auth.userId
     }).save()
       .then(anotherTask => {
@@ -40,8 +40,6 @@ function deleteItem(req, res){
             
         res.send("comment not found");
     });
-
 }
-
 
 module.exports =   { create, deleteItem };

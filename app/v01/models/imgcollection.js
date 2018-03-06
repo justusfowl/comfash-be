@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
     collectionTitle: {
         type: DataTypes.TEXT,
         allowNull: false
+    },
+    groupId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 }, {
     timestamps : false

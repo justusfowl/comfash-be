@@ -28,6 +28,12 @@ module.exports = (sequelize, DataTypes) => {
 });
 
 
+/*
+  User.associate = function(models) {
+    models.User.hasMany(models.Task);
+  };
+*/
+    
   return User;
 };
 

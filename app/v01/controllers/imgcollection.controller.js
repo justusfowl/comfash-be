@@ -35,7 +35,11 @@ function listQry (req,res) {
     c.*, \
     s.sessionId, \
     s.sessionCreated, \
-    i.*, \
+    s.sessionItemPath, \
+    s.sessionItemType,\
+    s.sessionThumbnailPath,\
+    s.width,\
+    s.height,\
     co.commentId, \
     co.commentText, \
     co.commentCreated, \
@@ -44,9 +48,8 @@ function listQry (req,res) {
     co.userId as commentUserId \
     FROM tblcollections c\
     LEFT JOIN tblsessions s on s.collectionId = c.collectionId\
-    LEFT JOIN tblimages i on s.sessionId = i.sessionId\
-    LEFT JOIN tblcomments co on i.imageId = co.imageId ' + whereStr +
-    ' ORDER BY c.collectionId, s.sessionId, i.imageId, co.commentId;';
+    LEFT JOIN tblcomments co on co.sessionId = s.sessionId ' + whereStr +
+    ' ORDER BY c.collectionId, s.sessionId, co.commentId;';
 
     models.sequelize.query(
         qryStr,
@@ -66,14 +69,6 @@ function listQry (req,res) {
                 "yRatio" : element.yRatio
                };
 
-            var image  = {
-              "imageId" : element.imageId, 
-              "imagePath" : element.imagePath, 
-              "height": element.height,
-              "width" : element.width, 
-              "comments" : []
-             };
-
             var collection = {
               "collectionId" : element.collectionId,
               "collectionTitle" : element.collectionTitle, 
@@ -84,12 +79,17 @@ function listQry (req,res) {
 
             var session = {
               "sessionId" : element.sessionId,
-              "images" : [], 
+              "sessionItemPath" : element.sessionItemPath,
+              "sessionItemType" : element.sessionItemType,
+              "sessionThumbnailPath" : element.sessionThumbnailPath,
+              "height" : element.height, 
+              "width" : element.width,
+              "comments" : [], 
               "votes"  : []
-             }
-          var  collectionIndex = -1, 
-                sessionIndex = -1,
-                imageIndex = -1; 
+             };
+
+          var collectionIndex = -1, 
+                sessionIndex = -1;
 
           for (var i = 0; i<result.length; i++){
               if (result[i].collectionId == element.collectionId){
@@ -99,8 +99,7 @@ function listQry (req,res) {
 
           if (collectionIndex == -1){
 
-            addToArray(comment, "commentId", image.comments);
-            addToArray(image, "imageId", session.images);
+            addToArray(comment, "commentId", session.comments);
             addToArray(session, "sessionId", collection.sessions);
 
             result.push(collection);
@@ -117,31 +116,14 @@ function listQry (req,res) {
 
             if (sessionIndex == -1){
 
-                addToArray(comment, "commentId", image.comments);
-                addToArray(image, "imageId", session.images);
+                addToArray(comment, "commentId", session.comments);
                 addToArray(session, "sessionId", result[collectionIndex].sessions);
 
                 sessionIndex = 0;
 
             }else{
 
-                for (var i = 0; i<result[collectionIndex].sessions[sessionIndex].images.length; i++){
-                    if (result[collectionIndex].sessions[sessionIndex].images[i].imageId == element.imageId){
-                        imageIndex = i;
-                    }
-                }
-
-                if (imageIndex == -1){
-
-                    addToArray(comment, "commentId", image.comments);
-                    addToArray(image, "imageId", result[collectionIndex].sessions[sessionIndex].images);
-                    
-
-                    imageIndex = 0;
-    
-                }else{
-                    addToArray(comment, "commentId", result[collectionIndex].sessions[sessionIndex].images[imageIndex].comments);
-                }
+                addToArray(comment, "commentId", result[collectionIndex].sessions[sessionIndex].comments);
             }
           }
 

@@ -15,16 +15,35 @@ var express    = require('express');        // call express
 var app        = express();                 // define our app using express
 var bodyParser = require('body-parser');
 
+var socketioJwt = require('socketio-jwt');
+
 var routes      = require('./app/v01/routes/index.route');
 
 
-const multer = require('multer');
-const fileType = require('file-type');
-
+config.baseDir = __dirname;
 
 var server = require('http').createServer(app);
 
 var io = require('socket.io')(server);
+
+
+/*
+const multer = require('multer');
+var storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+	  cb(null, __dirname + '/uploads')
+	},
+	filename: function (req, file, cb) {
+	  cb(null, file.fieldname + '-' + Date.now() + ".mp4")
+	}
+  })
+  
+var upload = multer({ storage: storage })
+
+app.post('/upload', upload.single('file'), (req, res) => {
+	res.json({"val" : "ok"});
+  });
+*/
 
 // middleware attachment of io instance to request
 app.use(function(req,res,next){
@@ -36,17 +55,27 @@ app.get('/socket', function(req, res){
 	res.sendFile(__dirname + '/testIO.html');
 });
 
-io.on('connection', function(socket){
-	console.log('a user CONNECTED');
-	console.log(socket)
-	console.log('a user CONNECTED END');
-});
+var socketCtrl = require('./app/v01/socket/socket.controller')
 
-io.on('disconnect', function(socket){
-	console.log('a user disconnected');
-	console.log(socket)
-	console.log('a user disconnected END');
-});
+//// With socket.io >= 1.0 //// 
+io.use(socketioJwt.authorize({
+	secret: config.auth.jwtSecret,
+	handshake: true
+  }));
+
+
+  /*
+io.on('connection', function (socket) {
+
+	// in socket.io 1.0 
+	console.log('hello! ', socket.decoded_token.userId);
+
+	socket.emit("msg", 'hello! ', socket.decoded_token.userId)
+})
+*/
+io.on('connection', socketCtrl.handleConnect);
+
+
 
 
 // configure app to use bodyParser()
@@ -63,61 +92,12 @@ app.use(express.static('public'));
 
 var port = config.PORT || 9999;
 
-//var mongoose = require('mongoose');
-//mongoose.connect('mongodb://192.0.0.115/cfdata');
-
-
-var testObj = {
-    "name" : "DINNER", 
-    "authorId" : ("5a8d2e78e631c0ef52a3956f"), 
-    "description" : "Burt is a Bear.", 
-    "collectionCreated" : "2018-02-21T15:48:46.076+0000", 
-    "sessions" : [
-       {
-			"_id" : "5a8d94de0d626c50d90384fb", 
-			"images" : [
-			{
-				"_id" : "5a8d94de0d626c50d90384fc", 
-				"path" : "http://cl18:9999/img/1.jpg", 
-				"height" : 2730.0, 
-				"width" : 4096.0, 
-				"comments" : [
-					{
-						"commentText" : "testausDB", 
-						"yRatio" : 0.53, 
-						"xRatio" : 0.5
-					}, 
-					{
-						"commentText" : "testausDB", 
-						"yRatio" : 0.53, 
-						"xRatio" : 0.5
-					}
-				]
-			}, 
-			{
-				"_id" : "5a8d94de0d626c50d90384fd", 
-				"path" : "http://cl18:9999/img/2.jpg", 
-				"height" : 5092.0, 
-				"width" : 3395.0, 
-				"comments" : [
-					{
-						"commentText" : "asdasd", 
-						"yRatio" : 0.53, 
-						"xRatio" : 0.5
-					}
-				]
-			}
-	]
-}
-    ]
-}; 
-
-
-
 
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /api
 app.use('/api/v' + config.APIVersion, routes);
+
+
 
 // START THE SERVER
 // =============================================================================

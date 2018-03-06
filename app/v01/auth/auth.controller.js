@@ -1,4 +1,3 @@
-//var VerifyToken = require('./VerifyToken');
 
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var bcrypt = require('bcryptjs');
@@ -81,5 +80,6 @@ function registerUser ( req, res ){
       })
 
 }
+
 
 module.exports = { checkLogin, registerUser };

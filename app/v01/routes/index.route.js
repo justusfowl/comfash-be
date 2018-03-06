@@ -7,9 +7,9 @@ var authRoutes          = require('./auth.route.js');
 var router = express.Router();
 
 //middleware verification of token
-var VerifyToken = require('../auth/token-validate.controller')
+var VerifyToken = require('../auth/token-validate.controller');
 
-router.use('/imgcollection', VerifyToken, imgCollectionRoutes ); 
+router.use('/imgcollection', VerifyToken.verifyToken, imgCollectionRoutes ); 
 
 router.use('/user', userRoutes ); 
 

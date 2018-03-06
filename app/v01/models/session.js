@@ -13,6 +13,26 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false, 
         defaultValue: DataTypes.NOW
     },
+    sessionItemPath: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    sessionItemType: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },  
+    sessionThumbnailPath: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    width: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    height: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     collectionId: {
         type: DataTypes.INTEGER,
         allowNull: false

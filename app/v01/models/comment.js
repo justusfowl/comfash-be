@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.FLOAT,
         allowNull: false
     },
-    imageId: {
+    sessionId: {
         type: DataTypes.INTEGER,
         allowNull: false
     },
