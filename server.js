@@ -19,13 +19,20 @@ var socketioJwt = require('socketio-jwt');
 
 var routes      = require('./app/v01/routes/index.route');
 
+var fs = require('fs');
+var options = {
+	key: fs.readFileSync('comfash.local.key'),
+	cert: fs.readFileSync('comfash.local.crt'),
+	ca: fs.readFileSync('rootCA.pem')
+  };
 
 config.baseDir = __dirname;
 
-var server = require('http').createServer(app);
+var server = require('https').createServer(options, app);
 
 var io = require('socket.io')(server);
 
+global.io = io;
 
 /*
 const multer = require('multer');

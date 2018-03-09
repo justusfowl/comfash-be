@@ -37,6 +37,9 @@ Gruntfile.js
 /images
 /public
 config.js
+*.crt
+*.key
+*.pem
 
 # e2e
 /e2e/*.js

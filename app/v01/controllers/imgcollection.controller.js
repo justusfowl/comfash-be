@@ -2,7 +2,8 @@ var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 var _ = require("lodash");
-
+var socketCtrl = require('../socket/socket.controller');
+var messageCtrl = require('../controllers/message.controller');
 
 function addToArray (obj, key, array){
 
@@ -14,21 +15,27 @@ function addToArray (obj, key, array){
 
 function listQry (req,res) {
     
-    var whereStr = ''; 
-    var qryOption; 
+    
+
+    let userId = req.auth.userId; 
+
+    if (!userId){
+        return res.status(500).send({ auth: false, message: 'No userid provided' });
+    }
+
+    var whereStr = ' WHERE c.userId = ? '; 
+    var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
 
     if (req.params.collectionId){
 
-        whereStr = ' WHERE c.collectionId = ?'; 
-        qryOption = { raw: true, replacements: [req.params.collectionId], type: models.sequelize.QueryTypes.SELECT}; 
+        whereStr += ' AND c.collectionId = ? '; 
+        qryOption.replacements.push(req.params.collectionId);
 
         if (req.params.sessionId){
             whereStr += " AND s.sessionId = ? "
             qryOption.replacements.push(req.params.sessionId);
         }
          
-    }else{
-        qryOption = { raw: true, type: models.sequelize.QueryTypes.SELECT}; 
     }
 
     let qryStr = 'SELECT \
@@ -45,10 +52,11 @@ function listQry (req,res) {
     co.commentCreated, \
     co.xRatio, \
     co.yRatio, \
-    co.userId as commentUserId \
+    co.userId as commentUserId, \
+    co.prcSessionItem \
     FROM tblcollections c\
-    LEFT JOIN tblsessions s on s.collectionId = c.collectionId\
-    LEFT JOIN tblcomments co on co.sessionId = s.sessionId ' + whereStr +
+    LEFT JOIN tblsessions s on c.collectionId = s.collectionId\
+    LEFT JOIN tblcomments co on s.sessionId = co.sessionId ' + whereStr +
     ' ORDER BY c.collectionId, s.sessionId, co.commentId;';
 
     models.sequelize.query(
@@ -66,7 +74,8 @@ function listQry (req,res) {
                 "commentUserId" : element.commentUserId,
                 "commentCreated" : element.commentCreated, 
                 "xRatio": element.xRatio,
-                "yRatio" : element.yRatio
+                "yRatio" : element.yRatio, 
+                "prcSessionItem" : element.prcSessionItem
                };
 
             var collection = {
@@ -122,7 +131,6 @@ function listQry (req,res) {
                 sessionIndex = 0;
 
             }else{
-
                 addToArray(comment, "commentId", result[collectionIndex].sessions[sessionIndex].comments);
             }
           }
@@ -140,17 +148,96 @@ function listQry (req,res) {
 
 function create(req, res){
 
+    const userId = req.auth.userId;
+    const usersSharedWith = req.body.sharedWithUsers;
+
     const collection = models.tblcollections.build({
         collectionTitle : req.body.collectionTitle, 
-        userId : req.auth.userId
+        userId : userId
       }).save()
-      .then(anotherTask => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
-        console.log("after save"); 
+      .then(newCollection => {
+       
+        console.log("new collection created"); 
 
-        req.io.emit('newCollection', "new collection created: " + req.body.collectionTitle);
+        // create a message object that is later used for notification on the creation of the collection
 
-        res.json(collection);
+        let msgOption = {
+            senderId : userId, 
+            receivers : [],
+            messageBody : "You have been invited to a new collection.", 
+            linkUrl : {
+                targetPage : 'ImgCollectionPage',
+                params : {
+                    collectionId : newCollection.collectionId
+                }
+            }, 
+            isUnread : 1
+        };
+
+        
+        var groupUsers = [];
+
+        // add all invitees to the group if there are some
+        if (usersSharedWith){
+
+            for (var i = 0; i<usersSharedWith.length; i++){
+
+                let sharedUserId = usersSharedWith[i].userId; 
+
+                let user = {
+                    collectionId : newCollection.collectionId, 
+                    userId : sharedUserId, 
+                    userIdIsAuthor : 0
+                }
+                groupUsers.push(user)
+                
+                // add sharedUserIds to the receivers of a message
+                msgOption.receivers.push(sharedUserId);
+            }
+        }
+
+        // add author to his group
+        groupUsers.push({
+            collectionId : newCollection.collectionId, 
+            userId : userId, 
+            userIdIsAuthor : 1
+        })
+
+        models.tblgroupusers.bulkCreate(groupUsers)
+        .then(function(response){
+            console.log("relvant groupusers created"); 
+            
+            res.json(response);
+
+            // create messages and send push notifications through socket to respective users
+
+            async function sendMessages() {
+                try {
+
+                    let createMessages = await messageCtrl.issueMessage(msgOption);
+                    if (createMessages){
+                        let message = await socketCtrl.joinActiveSocketsToGroup(groupUsers, newCollection );
+                    }
+                   
+                }
+                catch (error) {
+                    console.log(error);
+                }
+            }
+
+            (async () => {
+                await sendMessages();
+            })();
+
+            
+            return null;
+        })
+        .catch(function(error){
+            console.log(error);
+            res.send(500, error);
+        })
+
+          return null;
       })
       .catch(error => {
         // Ooops, do some error-handling

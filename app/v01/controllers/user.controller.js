@@ -1,8 +1,32 @@
 var models  = require('../models');
+var Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
-function list (req,res) {
+function searchUser (req,res) {
 
-    models.tblusers.findAll({}).then(function(users) {
+    let searchStr = req.query.userSearch; 
+
+    if (searchStr.length < 3){
+        return res.status(500).send({ message: 'Not enough characters provided, at least 3.' });
+    }
+
+    models.tblusers.findAll({
+        where : {
+            [Op.or]: [
+              {
+                userId: {
+                  [Op.like]: '%' + searchStr + '%'
+                }
+              },
+              {
+                userName: {
+                  [Op.like]: '%' + searchStr + '%'
+                }
+              }
+            ]
+          },
+        attributes: ['userId', 'userName', 'userAvatarPath']
+    }).then(function(users) {
         if (users) {				
             res.json(users);
         } else {
@@ -26,4 +50,4 @@ function socketGroups (userId){
 }
 
 
-module.exports = { list, listGroups};
+module.exports = { searchUser, listGroups};

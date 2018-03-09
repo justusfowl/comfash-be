@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    prcSessionItem: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     userId: {
         type: DataTypes.TEXT,
         allowNull: false

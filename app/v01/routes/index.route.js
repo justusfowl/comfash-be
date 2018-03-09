@@ -9,9 +9,13 @@ var router = express.Router();
 //middleware verification of token
 var VerifyToken = require('../auth/token-validate.controller');
 
+router.use('/hb', function (req, res){
+    res.json({"response": "healthy"})
+});
+
 router.use('/imgcollection', VerifyToken.verifyToken, imgCollectionRoutes ); 
 
-router.use('/user', userRoutes ); 
+router.use('/user', VerifyToken.verifyToken, userRoutes ); 
 
 router.use('/auth', authRoutes );
 

@@ -1,49 +1,78 @@
 var models  = require('../models');
+var Sequelize = require("sequelize");
+const Op = Sequelize.Op;
+
+async function issueMessage(msgOption) {
+    return new Promise(
+        (resolve, reject) => {
+
+            let messages = [];
+            let senderId = msgOption.senderId; 
+
+            msgOption.receivers.forEach(receiverId => {
+                let newMessage = {
+                    senderId : senderId, 
+                    receiverId : receiverId,
+                    messageBody : msgOption.messageBody, 
+                    linkUrl : JSON.stringify(msgOption.linkUrl), 
+                    isUnread : 1
+                }
+                messages.push(newMessage);
+            });
 
 
-function issueMessage(socket, msgOption){
+            models.tblmessages.bulkCreate(messages)
+            .then(function(response){
+                console.log("relvant messages created"); 
 
-     hier: gruppe aus req.params.collectionId
+                // create messages and send to respective recipients
+                
+                resolve(true);
+                return null;
+            })
+            .catch(function(error){
+                console.log(error);
+                reject (false)
+            })
 
-     --> get groupId from collectionID 
-
-     --> get users associated
-
-     --> create message und mache bulkCreate
-
-     --> emit an room
-
-     --> toDo: push notification 
-
-    if (msgOption.group != null){
-
-
-    }else{
-
-
-    }
+        
+        }
     
-    const message = models.tblmessages.build({
-        senderId : msgOption.senderId,
-        receiverId: msgOption.receiverId,
-        messageBody : msgOption.messageBody,
-        linkUrl : msgOption.linkUrl,
-        isUnread : 0
-    }).save()
-    .then(anotherTask => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
-        console.log("after save"); 
+    );
+};
 
-        .io.emit('newCollection', "new collection created: " + req.body.collectionTitle);
 
-        res.json(collection);
-    })
-    .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
+function list (req,res) {
+
+    let userId = req.auth.userId; 
+
+    var qryOption = { raw: true, replacements: [userId, userId], type: models.sequelize.QueryTypes.SELECT}; 
+
+    let qryStr = '\
+        SELECT \
+        m.messageId,\
+        m.messageBody, \
+        m.linkUrl, \
+        m.messageCreated, \
+        m.isUnread, \
+        s.userName as senderName,\
+        r.userName as receiverName\
+        FROM cfdata.tblmessages as m\
+        left join cfdata.tblusers as s ON m.senderId = s.userId\
+        left join cfdata.tblusers as r ON m.receiverId = r.userId\
+        WHERE m.senderId = ? or m.receiverId = ?;'
+
+    models.sequelize.query(
+        qryStr,
+        qryOption
+    ).then(messages => {
+
+        res.json(messages);
+        console.log(messages)
     })
 
 }
 
-module.exports = { list, listGroups};
+
+
+module.exports = { list, issueMessage };

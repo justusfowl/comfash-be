@@ -9,10 +9,10 @@ function create(req, res){
         xRatio: req.body.xRatio,
         yRatio: req.body.yRatio,
         sessionId: req.body.sessionId,
-        userId: req.auth.userId
+        userId: req.auth.userId, 
+        prcSessionItem : req.body.prcSessionItem
     }).save()
       .then(anotherTask => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
         console.log("after save"); 
         res.json(anotherTask);
       })

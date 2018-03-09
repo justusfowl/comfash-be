@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
     userBirthDate: {
         type: DataTypes.DATE,
         allowNull: false
+    }, 
+    userAvatarPath: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 }, {
     timestamps : false

@@ -6,6 +6,10 @@ const multer = require('multer');
 
 var config  = require('../../config/config');
 
+var ffmpeg = require('fluent-ffmpeg');
+
+var socketCtrl = require('../socket/socket.controller');
+
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 	  cb(null, config.baseDir + '/public/v')
@@ -38,26 +42,73 @@ function list (req,res) {
 
 function create(req, res){
 
-    var filename = req.file.filename;
+    var resultFilename = req.file.filename;
 
-    const session = models.tblsessions.build({
-        collectionId : req.params.collectionId, 
-        sessionItemPath : "/v/" + req.file.filename, 
-        sessionItemType : "video/mp4", 
-        sessionThumbnailPath : "not implemented", 
-        width: 100, 
-        height: 100
-      }).save()
-      .then(anotherTask => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
-        console.log("after save"); 
-        res.json(anotherTask);
-      })
-      .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-      })
+    var resultFile = resultFilename.substring(0,resultFilename.indexOf("."));
+
+    var proc = new ffmpeg(req.file.path)
+        .takeScreenshots({
+            count: 1,
+            timemarks: [ '1' ], 
+            filename: '%b-thumbnail'
+            }, config.baseDir + '/public/t', function(err) {
+            console.log('screenshots were saved')
+        });
+    
+    var getMetaData = new Promise(
+        function (resolve, reject) {
+            ffmpeg.ffprobe(req.file.path, function(err, metadata) {
+                console.dir(metadata);
+                let width = metadata.streams[0].coded_width; 
+                let height = metadata.streams[0].coded_height;
+
+                // inverse height/width for iphone as of now 
+
+                var resolution = {
+                    width : height, 
+                    height: width
+                }
+                resolve(resolution); 
+            });
+        }
+    );
+    
+    var insertSession = function () {
+        getMetaData
+            .then(function (resolution) {
+                const session = models.tblsessions.build({
+                    collectionId : req.params.collectionId, 
+                    sessionItemPath : "/v/" + req.file.filename, 
+                    sessionItemType : "video/mp4", 
+                    sessionThumbnailPath : "/t/" + resultFile + "-thumbnail.png", 
+                    width: resolution.width, 
+                    height: resolution.height
+                  }).save()
+                  .then(anotherTask => {
+                    // you can now access the currently saved task with the variable anotherTask... nice!
+                    console.log("after save"); 
+                    let msgOption = {
+                        userId : req.auth.userId
+                    }
+                    res.json(anotherTask);
+                    
+                    socketCtrl.emitMsgToGroup(req, 'a session has been stored');
+                  })
+                  .catch(error => {
+                    // Ooops, do some error-handling
+                    console.log(error); 
+                    res.send(500, error);
+                  })
+
+            })
+            .catch(function (error) {
+                console.log(error); 
+                res.send(500, error);
+            });
+    };
+
+    insertSession();
+
 }
 
 

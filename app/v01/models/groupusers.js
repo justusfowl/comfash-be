@@ -2,15 +2,19 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
     var groupUsers = sequelize.define('tblgroupusers', {
-        groupId: {
+        collectionId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true, 
-            autoIncrement: true
+            primaryKey: true
         },
         userId: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: false,
+            primaryKey: true
+        }, 
+        userIdIsAuthor : {
+            type: DataTypes.INTEGER,
+            allowNull: false,
         }
     }, {
         timestamps : false
