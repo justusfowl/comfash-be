@@ -19,7 +19,7 @@ function checkLogin(req, res){
             userId: userId
           }
     }).then(function(users) {
-        if (users) {			
+        if (users && users.length > 0) {			
         
             if(bcrypt.compareSync(password, users[0].password)) {
                 // Passwords match
@@ -27,7 +27,8 @@ function checkLogin(req, res){
                 let data = {
                     userId : users[0].userId, 
                     userName : users[0].userName, 
-                    userBirthDate : users[0].userBirthDate
+                    userBirthDate : users[0].userBirthDate, 
+                    userAvatarPath : users[0].userAvatarPath
                 }; 
 
                 var token = jwt.sign(data, config.auth.jwtSecret, {
@@ -43,7 +44,7 @@ function checkLogin(req, res){
             }
                
         } else {
-            res.send(401, "Sessions not found");
+            res.send(403, "Password/User not found");
         }
         }, function(error) {
             
@@ -60,7 +61,7 @@ function registerUser ( req, res ){
     const comment = models.tblusers.build({
         userId: req.body.userId,
         userBirthDate: req.body.userBirthDate, 
-        userName : req.body.userName, 
+        userName : req.body.username, 
         password : hashedPw
     }).save()
       .then(resultUser => {

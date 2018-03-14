@@ -1,6 +1,10 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+const config = require('../../config/config');
+
+var base64ToImage = require('base64-to-image');
+const uuidv1 = require('uuid/v1');
 
 function searchUser (req,res) {
 
@@ -49,5 +53,35 @@ function socketGroups (userId){
 
 }
 
+function upsertProfileAvatar (req, res){
 
-module.exports = { searchUser, listGroups};
+    let base64Str = req.body.imagePath;
+    let userId = req.auth.userId; 
+
+    let filename = uuidv1();
+
+    // place pictures in folder a for avatars
+    let path = config.publicDir  + '/a/';
+
+    var optionalObj = {'fileName': filename, 'type':'jpeg'}; 
+    
+    var imageInfo = base64ToImage(base64Str,path,optionalObj); 
+
+    const vote = models.tblusers.upsert({
+        userId: req.auth.userId, 
+        userAvatarPath : "/a/" + imageInfo.fileName
+    }).then(user => {
+        console.log("user avatar saved"); 
+        res.json(user);
+        })
+    .catch(error => {
+        // Ooops, do some error-handling
+        console.log(error); 
+        res.send(500, error);
+    })
+
+
+}
+
+
+module.exports = { searchUser, listGroups, upsertProfileAvatar};

@@ -27,11 +27,11 @@ function handleDisconnect (socket){
  * @param {*} options 
  * @param {*} msg 
  */
-function emitMsgToGroup(req, collectionId, msg){
+function emitMsgToGroup(collectionId, msg){
     
     let groupName = groupBase + collectionId.toString(); 
 
-    req.io.sockets.in(groupName).emit('msg', msg);
+    global.io.sockets.in(groupName).emit('msg', msg);
 
 }
 /**
@@ -82,7 +82,7 @@ async function joinActiveSocketsToGroup(users, collection){
 
                     mySocket.join(groupName);
 
-                    mySocket.emit('msg', "You have been invited to " + collection.collectionTitle + " in comfash");
+                    // mySocket.emit('msg', "You have been invited to " + collection.collectionTitle + " in comfash");
 
                     console.log("joining user " + user.userId + " to group: " + groupName);  
 
@@ -103,7 +103,7 @@ function handleConnect (socket){
 
     console.log('hello! ', socket.decoded_token.userId);
 
-	socket.emit("msg", 'hello! ' + socket.decoded_token.userId)
+	//socket.emit("msg", 'hello! ' + socket.decoded_token.userId)
     
     models.tblgroupusers.findAll({
         where : {
@@ -118,7 +118,7 @@ function handleConnect (socket){
                 let groupName = groupBase + element.collectionId.toString(); 
 
                 socket.join(groupName);
-                socket.emit('msg', "joining you to group " + groupName + " in comfash");
+                //socket.emit('msg', "joining you to group " + groupName + " in comfash");
                 console.log("joining user " + userId + " to group: " + groupName);
             });
 

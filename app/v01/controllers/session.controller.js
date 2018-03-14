@@ -1,7 +1,8 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
-    
+var fs = require('fs');
+
 const multer = require('multer');
 
 var config  = require('../../config/config');
@@ -112,4 +113,53 @@ function create(req, res){
 }
 
 
-module.exports =   { list, create, uploadVideo };
+function deleteSession(req, res){
+
+    models.tblsessions.findAll({
+        where: {
+            sessionId: req.params.sessionId
+          }
+    }).then(function(session) {
+        if (session) {
+            
+            let itemPath = (config.publicDir + session[0].sessionItemPath).replace(new RegExp(/\\/g),"/");
+            let sessionThumbnailPath = (config.publicDir + session[0].sessionThumbnailPath).replace(new RegExp(/\\/g),"/");
+
+            models.tblsessions.destroy({
+                where: {
+                    sessionId: req.params.sessionId
+                  }
+            }).then(function(session) {
+
+                try{
+                    fs.unlinkSync(itemPath);
+                    fs.unlinkSync(sessionThumbnailPath);
+
+                    res.json({"message" : "ok"});
+
+                }catch(err){
+                    res.send(401, "files could not be found")
+                }
+
+                }, function(error) {
+                    
+                res.send("comment not found");
+            });
+
+        } else {
+            res.send(401, "Sessions not found");
+        }
+        }, function(error) {
+            
+        res.send("Sessions not found");
+    });
+
+
+
+
+}
+
+
+
+
+module.exports =   { list, create, uploadVideo, deleteSession };

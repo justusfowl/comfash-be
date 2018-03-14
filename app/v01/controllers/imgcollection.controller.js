@@ -7,7 +7,9 @@ var messageCtrl = require('../controllers/message.controller');
 
 function addToArray (obj, key, array){
 
-    if (obj[key]!=null){
+    let index = array.findIndex(x => x[key] === obj[key])
+
+    if (obj[key]!=null && index == -1){
         array.push(obj)
     }
 }
@@ -15,8 +17,6 @@ function addToArray (obj, key, array){
 
 function listQry (req,res) {
     
-    
-
     let userId = req.auth.userId; 
 
     if (!userId){
@@ -53,10 +53,14 @@ function listQry (req,res) {
     co.xRatio, \
     co.yRatio, \
     co.userId as commentUserId, \
-    co.prcSessionItem \
+    co.prcSessionItem, \
+    v.voteType, \
+    v.voteChanged, \
+    v.userId as voteUserId \
     FROM tblcollections c\
     LEFT JOIN tblsessions s on c.collectionId = s.collectionId\
-    LEFT JOIN tblcomments co on s.sessionId = co.sessionId ' + whereStr +
+    LEFT JOIN tblcomments co on s.sessionId = co.sessionId \
+    LEFT JOIN tblvotes v on s.sessionId = v.sessionId ' + whereStr +
     ' ORDER BY c.collectionId, s.sessionId, co.commentId;';
 
     models.sequelize.query(
@@ -78,6 +82,13 @@ function listQry (req,res) {
                 "prcSessionItem" : element.prcSessionItem
                };
 
+            var vote = {
+                "sessionId" : element.sessionId, 
+                "voteType" : element.voteType,
+                "voteChanged" : element.voteChanged,
+                "userId" : element.voteUserId
+               };
+
             var collection = {
               "collectionId" : element.collectionId,
               "collectionTitle" : element.collectionTitle, 
@@ -97,8 +108,13 @@ function listQry (req,res) {
               "votes"  : []
              };
 
+             if (element.voteUserId == userId){
+                 session.myVote = vote;
+             }
+
           var collectionIndex = -1, 
-                sessionIndex = -1;
+                sessionIndex = -1, 
+                sessionIndexVote = -1;
 
           for (var i = 0; i<result.length; i++){
               if (result[i].collectionId == element.collectionId){
@@ -109,6 +125,7 @@ function listQry (req,res) {
           if (collectionIndex == -1){
 
             addToArray(comment, "commentId", session.comments);
+            addToArray(vote, "userId", session.votes);
             addToArray(session, "sessionId", collection.sessions);
 
             result.push(collection);
@@ -126,12 +143,14 @@ function listQry (req,res) {
             if (sessionIndex == -1){
 
                 addToArray(comment, "commentId", session.comments);
+                addToArray(vote, "userId", session.votes);
                 addToArray(session, "sessionId", result[collectionIndex].sessions);
 
                 sessionIndex = 0;
 
             }else{
                 addToArray(comment, "commentId", result[collectionIndex].sessions[sessionIndex].comments);
+                addToArray(vote, "userId", result[collectionIndex].sessions[sessionIndex].votes);
             }
           }
 
@@ -160,7 +179,10 @@ function create(req, res){
         console.log("new collection created"); 
 
         // create a message object that is later used for notification on the creation of the collection
+        
+        // the following should be outsourced to the message.controller 
 
+        /*
         let msgOption = {
             senderId : userId, 
             receivers : [],
@@ -173,8 +195,8 @@ function create(req, res){
             }, 
             isUnread : 1
         };
+        */
 
-        
         var groupUsers = [];
 
         // add all invitees to the group if there are some
@@ -192,7 +214,7 @@ function create(req, res){
                 groupUsers.push(user)
                 
                 // add sharedUserIds to the receivers of a message
-                msgOption.receivers.push(sharedUserId);
+                //msgOption.receivers.push(sharedUserId);
             }
         }
 
@@ -205,12 +227,13 @@ function create(req, res){
 
         models.tblgroupusers.bulkCreate(groupUsers)
         .then(function(response){
+
             console.log("relvant groupusers created"); 
             
             res.json(response);
 
             // create messages and send push notifications through socket to respective users
-
+            /*
             async function sendMessages() {
                 try {
 
@@ -228,9 +251,10 @@ function create(req, res){
             (async () => {
                 await sendMessages();
             })();
-
+            
             
             return null;
+            */
         })
         .catch(function(error){
             console.log(error);

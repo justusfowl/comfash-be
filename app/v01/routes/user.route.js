@@ -22,4 +22,7 @@ router.route('/messages')
 
     .get(messageCtrl.list)
 
+router.route('/avatar')
+    .post(userCtrl.upsertProfileAvatar)
+
 module.exports =  router; 

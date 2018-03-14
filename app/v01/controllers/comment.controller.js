@@ -24,7 +24,7 @@ function create(req, res){
 
 }
 
-function deleteItem(req, res){ 
+function deleteItem(req, res){
 
     models.tblcomments.destroy({
         where: {

@@ -27,6 +27,7 @@ var options = {
   };
 
 config.baseDir = __dirname;
+config.publicDir = __dirname + "/public";
 
 var server = require('https').createServer(options, app);
 
