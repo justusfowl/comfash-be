@@ -1,3 +1,5 @@
+
+/*
 var Sequelize = require('sequelize');
 const config = require('./config');
 
@@ -24,12 +26,11 @@ var sequelize = new Sequelize(config.mysqlDb.database, null, null, {
       acquire: 30000,
       idle: 10000
     },
-  
-    // SQLite only
-    //storage: 'path/to/database.sqlite',
-  
-    // http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
     operatorsAliases: false
   });
 
+  
+
 module.exports = sequelize
+
+*/

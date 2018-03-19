@@ -66,20 +66,18 @@ app.use(cors());
 app.use('/images', express.static('public/img'));
 app.use(express.static('public'));
 
-var port = config.PORT || 9999;
-
 
 // REGISTER OUR ROUTES
 // =============================================================================
 // all of our routes will be prefixed with /api
-app.use('/api/v' + config.APIVersion, routes);
 
+app.use('/api/v' + config.APIVersion, routes);
 
 
 // START THE SERVER
 // =============================================================================
-server.listen(port);
+server.listen(config.port);
 
-console.log('ComfashBE application running on port: ' + port);
+console.log('ComfashBE application running on port: ' + config.port);
 
 config.logger.info("comfash started")

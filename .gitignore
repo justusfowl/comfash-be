@@ -36,14 +36,20 @@ testem.log
 Gruntfile.js
 /images
 /public
-config.js
+
+
+.env
+
 *.crt
 *.key
 *.pem
 
 .audit.json
 
+/logs/*
 *.log
+
+*.exe
 
 # e2e
 /e2e/*.js

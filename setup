@@ -1,0 +1,18 @@
+sudo apt-get update
+
+// install node js 
+
+curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+
+// install maria db
+
+sudo apt-get install mariadb-server mariadb-client
+sudo mysql_secure_installation
+
+
+// set up node modules
+
+npm install
+

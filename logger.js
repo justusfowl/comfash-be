@@ -10,16 +10,13 @@ var morgan = require('morgan')
 var path = require('path')
 var rfs = require('rotating-file-stream');
 
-
 const myFormat = printf(info => {
     return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
   });
 
-
   var winston = require('winston');
   require('winston-daily-rotate-file');
 
-  
   var transportError = new (winston.transports.DailyRotateFile)({
     filename: 'logs/comfash-be-error-%DATE%.log',
     level : 'error',
@@ -98,9 +95,7 @@ const sqlLogger = winston.createLogger({
 
 logger.info('Init logger');
 
-
 // morgan HTTP request middle ware
-
 
 var logDirectory = path.join(__dirname, 'logs/access')
 
