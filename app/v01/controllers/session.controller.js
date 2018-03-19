@@ -7,6 +7,7 @@ const multer = require('multer');
 
 var config  = require('../../config/config');
 
+
 var ffmpeg = require('fluent-ffmpeg');
 
 var socketCtrl = require('../socket/socket.controller');
@@ -42,6 +43,8 @@ function list (req,res) {
 }
 
 function create(req, res){
+
+    console.log(" HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS")
 
     var resultFilename = req.file.filename;
 
@@ -154,12 +157,35 @@ function deleteSession(req, res){
         res.send("Sessions not found");
     });
 
+}
+
+async function getSessionInfo (sessionId) {
+    
+    return new Promise(
+        (resolve, reject) => {
 
 
+            var qryOption = { raw: true, replacements: [sessionId], type: models.sequelize.QueryTypes.SELECT}; 
 
+            let qryStr = 'SELECT s.*, c.userId, c.collectionCreated, c.collectionTitle FROM cfdata.tblsessions as s \
+            inner join cfdata.tblcollections as c on s.collectionId = c.collectionId \
+            where s.sessionId = ?;';
+        
+            models.sequelize.query(
+                qryStr,
+                qryOption
+            ).then(sessionInfo => {
+
+                resolve(sessionInfo);
+
+            })
+        }
+    );
+    
 }
 
 
 
 
-module.exports =   { list, create, uploadVideo, deleteSession };
+
+module.exports =   { list, create, uploadVideo, deleteSession, getSessionInfo };

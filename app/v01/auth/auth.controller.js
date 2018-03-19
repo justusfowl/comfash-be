@@ -40,16 +40,17 @@ function checkLogin(req, res){
                 res.json(data);
             } else {
                 // Passwords don't match
-                res.send(403, "Either username or password invalid");
+                throw new Error("Passwords dont match");
             }
                
         } else {
-            res.send(403, "Password/User not found");
+            throw new Error("No user could be found");
         }
-        }, function(error) {
-            
-        res.send("Sessions not found");
-    });
+    }).catch(error => {
+        // Ooops, do some error-handling
+        global.config.logger.error(error.stack);
+        res.send(403, "Either username or password invalid");
+      })
 
 }
 
@@ -81,6 +82,8 @@ function registerUser ( req, res ){
       })
 
 }
+
+// function authorizeRead()
 
 
 module.exports = { checkLogin, registerUser };

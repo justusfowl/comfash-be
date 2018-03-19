@@ -1,82 +1,170 @@
 var models  = require('../models');
 
+var _ = require('lodash');
 
+var qryStrings= {
+
+    // itemType classifies the item / source of the trending item (e.g. 1 = vote, 2 = comment)
+    "trendingVotes" : '\
+    Select \
+        vo.*,  \
+        itemCreator.userName as itemCreator,  \
+        itemCreator.userAvatarPath as itemCreatorAvatarPath,  \
+        s.sessionItemPath,  \
+        s.sessionThumbnailPath, \
+        c.collectionTitle,  \
+        c.collectionId,  \
+        colOwner.userName as colOwner,  \
+        colOwner.userId as colOwnerId,  \
+        comStats.commentCtn,  \
+        voteStats.votesCtn,   \
+        voteStats.votesAvg, \
+        vo.voteChanged as refDate, \
+        myVote.voteType as myVoteType, \
+        1 as itemType  \
+    FROM cfdata.tblvotes as vo \
+    LEFT JOIN tblsessions s on vo.sessionId = s.sessionId  \
+    LEFT JOIN tblcollections c on s.collectionId = c.collectionId  \
+    LEFT JOIN cfdata.tblusers as colOwner on vo.userId = colOwner.userId \
+    LEFT JOIN cfdata.tblusers as itemCreator on vo.userId = itemCreator.userId \
+    LEFT JOIN ( \
+        SELECT * FROM \
+        cfdata.tblvotes  \
+        WHERE userID = ? ) as myVote on vo.sessionId = myVote.sessionId \
+    LEFT JOIN ( \
+        select count(*) as commentCtn, sessionId  \
+        from cfdata.tblcomments  \
+        group by sessionId \
+        ) as comStats on vo.sessionId = comStats.sessionId  \
+    LEFT JOIN ( \
+        select  \
+            count(*) as votesCtn, \
+            avg(voteType) as votesAvg, \
+            sessionId  \
+        from cfdata.tblvotes  \
+        group by sessionId \
+        ) as voteStats on vo.sessionId = voteStats.sessionId  \
+    order by voteChanged DESC \
+    LIMIT ? OFFSET ?; ', 
+
+
+    "trendingComments" : '\
+    Select \
+        co.*,  \
+        itemCreator.userName as itemCreator,  \
+        itemCreator.userAvatarPath as itemCreatorAvatarPath,  \
+        s.sessionItemPath,  \
+        s.sessionThumbnailPath, \
+        c.collectionTitle,  \
+        c.collectionId,  \
+        colOwner.userName as colOwner,  \
+        colOwner.userId as colOwnerId,  \
+        comStats.commentCtn,  \
+        voteStats.votesCtn,   \
+        voteStats.votesAvg,  \
+        co.commentCreated as refDate, \
+        myVote.voteType as myVoteType, \
+        2 as itemType  \
+    FROM cfdata.tblcomments as co \
+    LEFT JOIN tblsessions s on co.sessionId = s.sessionId  \
+    LEFT JOIN tblcollections c on s.collectionId = c.collectionId  \
+    LEFT JOIN cfdata.tblusers as colOwner on co.userId = colOwner.userId \
+    LEFT JOIN cfdata.tblusers as itemCreator on co.userId = itemCreator.userId \
+    LEFT JOIN ( \
+        SELECT * FROM \
+        cfdata.tblvotes  \
+        WHERE userID = ? ) as myVote on co.sessionId = myVote.sessionId \
+    LEFT JOIN ( \
+        select count(*) as commentCtn, sessionId  \
+        from cfdata.tblcomments  \
+        group by sessionId \
+        ) as comStats on co.sessionId = comStats.sessionId  \
+    LEFT JOIN ( \
+        select  \
+            count(*) as votesCtn, \
+            avg(voteType) as votesAvg, \
+            sessionId  \
+        from cfdata.tblvotes  \
+        group by sessionId \
+        ) as voteStats on co.sessionId = voteStats.sessionId  \
+    order by commentCreated DESC \
+    LIMIT ? OFFSET ?; ', 
+
+
+
+}
 
 function getStream (req,res) {
     
     let limit = parseInt(req.query.limit) || 10; 
     let skip = parseInt(req.query.skip) || 0;
 
-    var qryOption = { raw: true, replacements: [limit, skip, limit, skip], type: models.sequelize.QueryTypes.SELECT}; 
+    let options = {
+        userId : req.auth.userId,
+        limit: limit, 
+        skip : skip
+    }; 
 
-    let qryStr = '\
-        SELECT \
-            userName, \
-            userAvatarPath,\
-            collectionId, \
-            collectionTitle, \
-            collectionCreated,\
-            max(voteChanged) as lastVoted, \
-            max(commentCreated) as lastCommented, \
-            max(sessionThumbnailPath) as sessionThumbnailPath,\
-            avg(voteType) as avgVote, \
-            count( distinct sessionId) as noSessions\
-            from (\
-                SELECT  \
-                    c.collectionId, \
-                    c.collectionTitle, \
-                    c.collectionCreated,\
-                    u.userName, \
-                    u.userAvatarPath,\
-                    s.sessionId,  \
-                    s.sessionThumbnailPath,\
-                    co.commentCreated,  \
-                    v.voteType,  \
-                    v.voteChanged  \
-                FROM tblcollections c \
-                LEFT JOIN tblsessions s on c.collectionId = s.collectionId \
-                LEFT JOIN tblcomments co on s.sessionId = co.sessionId  \
-                LEFT JOIN tblvotes v on s.sessionId = v.sessionId \
-                LEFT JOIN cfdata.tblusers as u on c.userId = u.userId \
-                \
-                INNER JOIN ( \
-                    \
-                select * from ( \
-                Select co.sessionId, co.commentCreated \
-                from cfdata.tblcomments as co \
-                order by co.commentCreated desc \
-                LIMIT ? OFFSET ? \
-                ) as a\
-                union all \
-                select * from (\
-                select vo.sessionId, vo.voteChanged\
-                from cfdata.tblvotes as vo\
-                order by vo.voteChanged desc\
-                limit ? OFFSET ? ) as b\
-                )as updates on updates.sessionId = s.sessionId\
-                ORDER BY c.collectionId, s.sessionId, co.commentId\
-            ) as b\
-            group by \
-                userName, \
-                collectionId, \
-                collectionTitle\
-            order by max(voteChanged) DESC, max(commentCreated) DESC; ';
+    (async () => {
+        
+        let trendComments = await getTrendingItems(options, "trendingComments");
+        let trendVotes = await getTrendingItems(options, "trendingVotes");
 
-    models.sequelize.query(
-        qryStr,
-        qryOption
-    ).then(trendStream => {
+        let output = trendComments.concat(trendVotes);
 
-        res.json(trendStream);
-        console.log(trendStream)
-    })
-    .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-      })
+        let sortedOutput = _.orderBy(output, 'refDate', 'desc');
+
+        res.json(sortedOutput)
+
+    })();
+
+
 }
 
+
+
+async function getTrendingItems (options, target) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+            let userId = options.userId; 
+            let limit = options.limit;
+            let skip = options.skip;
+
+            /*
+            let limit = parseInt(req.query.limit) || 10; 
+            let skip = parseInt(req.query.skip) || 0;
+            */
+            var qryOption = { raw: true, replacements: [userId, limit, skip], type: models.sequelize.QueryTypes.SELECT}; 
+
+            let qryStr; 
+
+            switch(target) {
+                case "trendingVotes":
+                    qryStr = qryStrings["trendingVotes"];
+                    break;
+                case "trendingComments":
+                    qryStr = qryStrings["trendingComments"]
+                    break;
+                default:
+                    qryStr = "";
+            }
+        
+            models.sequelize.query(
+                qryStr,
+                qryOption
+            ).then(trendComments => {
+
+                resolve(trendComments);
+
+            }).catch(err => {
+                reject(err);
+            })
+        }
+    );
+    
+}
 
 
 module.exports =   { getStream };

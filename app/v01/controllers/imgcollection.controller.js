@@ -16,20 +16,31 @@ function addToArray (obj, key, array){
 
 
 function listQry (req,res) {
+
+    let userId, whereStr, qryOption; 
+
+    userId = req.params.userId; 
+
+    /*
     
-    let userId = req.auth.userId; 
 
     if (!userId){
         return res.status(500).send({ auth: false, message: 'No userid provided' });
     }
-
+   
     var whereStr = ' WHERE c.userId = ? '; 
-    var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
+    
+    */
+
+    whereStr = ' WHERE c.userId = ? ';
+    qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
 
     if (req.params.collectionId){
 
-        whereStr += ' AND c.collectionId = ? '; 
-        qryOption.replacements.push(req.params.collectionId);
+        userId = req.auth.userId;
+        
+        whereStr = ' WHERE c.collectionId = ? ';
+        qryOption = { raw: true, replacements: [req.params.collectionId], type: models.sequelize.QueryTypes.SELECT}; 
 
         if (req.params.sessionId){
             whereStr += " AND s.sessionId = ? "
@@ -40,6 +51,7 @@ function listQry (req,res) {
 
     let qryStr = 'SELECT \
     c.*, \
+    colUs.userName, \
     s.sessionId, \
     s.sessionCreated, \
     s.sessionItemPath, \
@@ -54,12 +66,15 @@ function listQry (req,res) {
     co.yRatio, \
     co.userId as commentUserId, \
     co.prcSessionItem, \
+    us.userName as commentUserName, \
     v.voteType, \
     v.voteChanged, \
     v.userId as voteUserId \
     FROM tblcollections c\
     LEFT JOIN tblsessions s on c.collectionId = s.collectionId\
     LEFT JOIN tblcomments co on s.sessionId = co.sessionId \
+    LEFT JOIN tblusers us on co.userId = us.userId\
+    LEFT JOIN tblusers colUs on c.userId = colUs.userId\
     LEFT JOIN tblvotes v on s.sessionId = v.sessionId ' + whereStr +
     ' ORDER BY c.collectionId, s.sessionId, co.commentId;';
 
@@ -79,7 +94,8 @@ function listQry (req,res) {
                 "commentCreated" : element.commentCreated, 
                 "xRatio": element.xRatio,
                 "yRatio" : element.yRatio, 
-                "prcSessionItem" : element.prcSessionItem
+                "prcSessionItem" : element.prcSessionItem, 
+                "commentUserName" : element.commentUserName
                };
 
             var vote = {
@@ -90,22 +106,24 @@ function listQry (req,res) {
                };
 
             var collection = {
-              "collectionId" : element.collectionId,
-              "collectionTitle" : element.collectionTitle, 
-              "collectionCreated" : element.collectionCreated,
-              "userId" : element.userId,
-              "sessions": []
+                "collectionId" : element.collectionId,
+                "collectionTitle" : element.collectionTitle, 
+                "collectionCreated" : element.collectionCreated,
+                "userId" : element.userId,
+                "userName" : element.userName,
+                "sessions": []
              }
 
             var session = {
-              "sessionId" : element.sessionId,
-              "sessionItemPath" : element.sessionItemPath,
-              "sessionItemType" : element.sessionItemType,
-              "sessionThumbnailPath" : element.sessionThumbnailPath,
-              "height" : element.height, 
-              "width" : element.width,
-              "comments" : [], 
-              "votes"  : []
+                "userId" : element.userId,
+                "sessionId" : element.sessionId,
+                "sessionItemPath" : element.sessionItemPath,
+                "sessionItemType" : element.sessionItemType,
+                "sessionThumbnailPath" : element.sessionThumbnailPath,
+                "height" : element.height, 
+                "width" : element.width,
+                "comments" : [], 
+                "votes"  : []
              };
 
              if (element.voteUserId == userId){

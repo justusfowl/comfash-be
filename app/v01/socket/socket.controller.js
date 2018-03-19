@@ -3,6 +3,9 @@ var VerifyToken = require('../auth/token-validate.controller');
 var models = require('../models');
 var _ = require('lodash');
 
+var logger = require("../../../logger").logger;
+
+
 /**
  * Basic prefix of groups/rooms within the socket evironments
  */
@@ -84,7 +87,7 @@ async function joinActiveSocketsToGroup(users, collection){
 
                     // mySocket.emit('msg', "You have been invited to " + collection.collectionTitle + " in comfash");
 
-                    console.log("joining user " + user.userId + " to group: " + groupName);  
+                    global.config.logger.info("joining user " + user.userId + " to group: " + groupName);  
 
                 });
                 
@@ -119,7 +122,8 @@ function handleConnect (socket){
 
                 socket.join(groupName);
                 //socket.emit('msg', "joining you to group " + groupName + " in comfash");
-                console.log("joining user " + userId + " to group: " + groupName);
+                global.config.logger.info("joining user " + userId + " to group: " + groupName);
+                global.config.logger.error("testerror");
             });
 
         } else {

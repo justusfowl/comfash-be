@@ -80,8 +80,33 @@ function upsertProfileAvatar (req, res){
         res.send(500, error);
     })
 
-
 }
 
 
-module.exports = { searchUser, listGroups, upsertProfileAvatar};
+async function getUserInfo (userId) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+
+            var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
+
+            let qryStr = 'SELECT u.userId, u.userName, u.userAvatarPath FROM \
+            cfdata.tblusers as u\
+            where u.userId = ?;';
+        
+            models.sequelize.query(
+                qryStr,
+                qryOption
+            ).then(userInfo => {
+
+                resolve(userInfo);
+
+            })
+        }
+    );
+    
+}
+
+
+module.exports = { searchUser, listGroups, upsertProfileAvatar, getUserInfo};

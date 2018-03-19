@@ -2,19 +2,34 @@ var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
+
 var socketCtrl = require('../socket/socket.controller');
+var userCtrl = require('./user.controller');
+var sessionCtrl = require('./session.controller');
+
+var signalCtrl = require('./signal.controller');
 
 async function notifyVote(sessionId, userId) {
     try {
+        
+        let userDevices = await signalCtrl.getUserDevices(userId);
 
-        let groupUsers = await getMsgUserPerSession(sessionId);
 
-        let collectionId = groupUsers[0].collectionId;
+
+
+        let senderUserInfo = await userCtrl.getUserInfo(userId);
+        let sessionInfo = await sessionCtrl.getSessionInfo(sessionId);
+
+        let receiverId = sessionInfo[0].userId;
+        let senderName = senderUserInfo[0].userName;
+
+        let collectionId = sessionInfo[0].collectionId;
+        let collectionTitle = sessionInfo[0].collectionTitle;
 
         let msgOption = {
             senderId : userId, 
-            receivers : [],
-            messageBody : "Someone voted for an outfit", 
+            receivers : [receiverId],
+            messageBody : senderName + " has voted for your outfit in #" + collectionTitle, 
             linkUrl : {
                 targetPage : 'ContentPage',
                 params : {
@@ -22,23 +37,27 @@ async function notifyVote(sessionId, userId) {
                     compareSessionIds : sessionId
                 }
             }, 
-            isUnread : 1
+            isUnread : 1, 
+            collectionId : collectionId, 
+            sessionId : sessionId
         };
 
-        for (var i = 0; i<groupUsers.length; i++){
-            if (groupUsers[i].userId != msgOption.sessionId){
-                msgOption.receivers.push(groupUsers[i].userId);
-            }
+        var message = {
+            headings : { "en" : "FittingStreamUpdate"}, 
+            contents: {"en": "Voting"},
+            data: msgOption.linkUrl,
+            include_player_ids: userDevices
+          };
+
+        if (userDevices.length > 0){
+            signalCtrl.sendNotification(message);
         }
 
         let messages = await issueMessage(msgOption);
 
-        
         if (messages){
-            let socketMessages = await socketCtrl.joinActiveSocketsToGroup(groupUsers, newCollection );
+            //let socketMessages = await socketCtrl.joinActiveSocketsToGroup(groupUsers, newCollection );
         }
-
-        socketCtrl.emitMsgToGroup(collectionId, )
 
         return true;
        
@@ -96,7 +115,9 @@ async function issueMessage(msgOption) {
         (resolve, reject) => {
 
             let messages = [];
-            let senderId = msgOption.senderId; 
+            let senderId = msgOption.senderId;
+            let collectionId = msgOption.collectionId || null;
+            let sessionId = msgOption.sessionId || null;
 
             msgOption.receivers.forEach(receiverId => {
                 let newMessage = {
@@ -104,7 +125,9 @@ async function issueMessage(msgOption) {
                     receiverId : receiverId,
                     messageBody : msgOption.messageBody, 
                     linkUrl : JSON.stringify(msgOption.linkUrl), 
-                    isUnread : 1
+                    isUnread : 1, 
+                    collectionId: collectionId, 
+                    sessionId: sessionId
                 }
                 messages.push(newMessage);
             });
@@ -144,11 +167,14 @@ function list (req,res) {
         m.messageCreated, \
         m.isUnread, \
         s.userName as senderName,\
-        r.userName as receiverName\
+        r.userName as receiverName,\
+        sess.sessionThumbnailPath \
         FROM cfdata.tblmessages as m\
         left join cfdata.tblusers as s ON m.senderId = s.userId\
         left join cfdata.tblusers as r ON m.receiverId = r.userId\
-        WHERE m.receiverId = ?;'
+        left join cfdata.tblsessions as sess ON m.sessionId = sess.sessionId \
+        WHERE m.receiverId = ? \
+        ORDER BY m.messageCreated DESC ;'
 
     models.sequelize.query(
         qryStr,
@@ -161,6 +187,29 @@ function list (req,res) {
 
 }
 
+function markMessageRead(req, res){
+
+    console.log("HIER NOCH AUTHORISIERUNG AUF EIGENE MESSAGES EINSCHRÄNKEN");
+
+    let messageId = req.params.messageId;
+
+    models.tblmessages.update({
+        isUnread: 0
+      }, {
+        where: { messageId: messageId }
+      }).then(function(message) {
+        if (message) {				
+            res.json(message);
+        } else {
+            res.send(401, "message not found");
+        }
+        }, function(error) {
+            
+        res.send("message not found");
+    });
+
+}
 
 
-module.exports = { list, issueMessage, getMsgUserPerSession, notifyVote };
+
+module.exports = { list, issueMessage, getMsgUserPerSession, notifyVote, markMessageRead };

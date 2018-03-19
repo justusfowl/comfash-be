@@ -31,6 +31,14 @@ module.exports = (sequelize, DataTypes) => {
     isUnread: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    collectionId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    sessionId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 }, {
     timestamps : false
