@@ -11,8 +11,32 @@ sudo apt-get install -y nodejs
 sudo apt-get install mariadb-server mariadb-client
 sudo mysql_secure_installation
 
+--> adapt credentialls in config.js/.env
+
 
 // set up node modules
 
 npm install
 
+// zertifikat installation : 
+https://certbot.eff.org/lets-encrypt/ubuntuxenial-other 
+
+sudo apt-get update
+$ sudo apt-get install software-properties-common
+$ sudo add-apt-repository ppa:certbot/certbot
+$ sudo apt-get update
+$ sudo apt-get install certbot 
+
+
+// setup order
+
+mkdir public
+mkdir public/a
+mkdir public/img
+mkdir public/t
+mkdir public/v
+
+// upload ffmpeg to server 
+sudo apt-get install ffmpeg 
+
+(see ffmeg requirements)

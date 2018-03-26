@@ -123,7 +123,6 @@ function handleConnect (socket){
                 socket.join(groupName);
                 //socket.emit('msg', "joining you to group " + groupName + " in comfash");
                 global.config.logger.info("joining user " + userId + " to group: " + groupName);
-                global.config.logger.error("testerror");
             });
 
         } else {

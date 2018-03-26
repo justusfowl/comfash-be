@@ -4,6 +4,7 @@ const Op = Sequelize.Op;
 var fs = require('fs');
 
 const multer = require('multer');
+var messageCtrl = require('../controllers/message.controller');
 
 var config  = require('../../config/config');
 
@@ -11,6 +12,9 @@ var config  = require('../../config/config');
 var ffmpeg = require('fluent-ffmpeg');
 
 var socketCtrl = require('../socket/socket.controller');
+
+
+
 
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -78,6 +82,9 @@ function create(req, res){
     );
     
     var insertSession = function () {
+
+        let userId = req.auth.userId; 
+
         getMetaData
             .then(function (resolution) {
                 const session = models.tblsessions.build({
@@ -88,15 +95,18 @@ function create(req, res){
                     width: resolution.width, 
                     height: resolution.height
                   }).save()
-                  .then(anotherTask => {
+                  .then(resultingSession => {
                     // you can now access the currently saved task with the variable anotherTask... nice!
                     console.log("after save"); 
-                    let msgOption = {
-                        userId : req.auth.userId
-                    }
-                    res.json(anotherTask);
+
+                    res.json(resultingSession);
+
+                    let sessionId = resultingSession.sessionId; 
                     
-                    socketCtrl.emitMsgToGroup(req, 'a session has been stored');
+                    (async () => {
+                        await messageCtrl.notifySessionCreate(userId, sessionId)
+                    })();
+            
                   })
                   .catch(error => {
                     // Ooops, do some error-handling
@@ -159,33 +169,4 @@ function deleteSession(req, res){
 
 }
 
-async function getSessionInfo (sessionId) {
-    
-    return new Promise(
-        (resolve, reject) => {
-
-
-            var qryOption = { raw: true, replacements: [sessionId], type: models.sequelize.QueryTypes.SELECT}; 
-
-            let qryStr = 'SELECT s.*, c.userId, c.collectionCreated, c.collectionTitle FROM cfdata.tblsessions as s \
-            inner join cfdata.tblcollections as c on s.collectionId = c.collectionId \
-            where s.sessionId = ?;';
-        
-            models.sequelize.query(
-                qryStr,
-                qryOption
-            ).then(sessionInfo => {
-
-                resolve(sessionInfo);
-
-            })
-        }
-    );
-    
-}
-
-
-
-
-
-module.exports =   { list, create, uploadVideo, deleteSession, getSessionInfo };
+module.exports =   { list, create, uploadVideo, deleteSession };

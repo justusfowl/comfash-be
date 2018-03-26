@@ -1,9 +1,10 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
-var _ = require("lodash");
+
 var socketCtrl = require('../socket/socket.controller');
 var messageCtrl = require('../controllers/message.controller');
+var _ = require("lodash");
 
 function addToArray (obj, key, array){
 
@@ -174,7 +175,29 @@ function listQry (req,res) {
 
         };
           
-        _(collections).forEach(nestCollection); 
+        _(collections).forEach(nestCollection);
+
+        // calculate voting stats
+        
+        _(result).forEach(function (collection){
+
+            _(collection.sessions).forEach(function (session){
+
+                let votes = session.votes; 
+
+                let count = votes.length; 
+                let avg = _.meanBy(votes, 'voteType');
+
+                let voteStats = {
+                    "count" : count, 
+                    "avg" : avg
+                }
+                
+                session["voteStats"] = voteStats;
+            });
+
+
+        });
 
         res.json(result);
         console.log(result)
@@ -187,33 +210,13 @@ function create(req, res){
 
     const userId = req.auth.userId;
     const usersSharedWith = req.body.sharedWithUsers;
+    const collectionTitle = req.body.collectionTitle; 
 
     const collection = models.tblcollections.build({
-        collectionTitle : req.body.collectionTitle, 
+        collectionTitle : collectionTitle, 
         userId : userId
       }).save()
       .then(newCollection => {
-       
-        console.log("new collection created"); 
-
-        // create a message object that is later used for notification on the creation of the collection
-        
-        // the following should be outsourced to the message.controller 
-
-        /*
-        let msgOption = {
-            senderId : userId, 
-            receivers : [],
-            messageBody : "You have been invited to a new collection.", 
-            linkUrl : {
-                targetPage : 'ImgCollectionPage',
-                params : {
-                    collectionId : newCollection.collectionId
-                }
-            }, 
-            isUnread : 1
-        };
-        */
 
         var groupUsers = [];
 
@@ -231,8 +234,6 @@ function create(req, res){
                 }
                 groupUsers.push(user)
                 
-                // add sharedUserIds to the receivers of a message
-                //msgOption.receivers.push(sharedUserId);
             }
         }
 
@@ -250,29 +251,16 @@ function create(req, res){
             
             res.json(response);
 
-            // create messages and send push notifications through socket to respective users
-            /*
-            async function sendMessages() {
-                try {
-
-                    let createMessages = await messageCtrl.issueMessage(msgOption);
-                    if (createMessages){
-                        let message = await socketCtrl.joinActiveSocketsToGroup(groupUsers, newCollection );
-                    }
-                   
-                }
-                catch (error) {
-                    console.log(error);
-                }
-            }
 
             (async () => {
-                await sendMessages();
+                await messageCtrl.notifyCollectionCreate(userId, collectionTitle, groupUsers)
             })();
-            
-            
+    
             return null;
-            */
+
+            // create messages and send push notifications to invitees
+
+
         })
         .catch(function(error){
             console.log(error);

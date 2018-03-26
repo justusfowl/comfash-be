@@ -25,7 +25,7 @@ var qryStrings= {
     FROM cfdata.tblvotes as vo \
     LEFT JOIN tblsessions s on vo.sessionId = s.sessionId  \
     LEFT JOIN tblcollections c on s.collectionId = c.collectionId  \
-    LEFT JOIN cfdata.tblusers as colOwner on vo.userId = colOwner.userId \
+    LEFT JOIN cfdata.tblusers as colOwner on c.userId = colOwner.userId \
     LEFT JOIN cfdata.tblusers as itemCreator on vo.userId = itemCreator.userId \
     LEFT JOIN ( \
         SELECT * FROM \
@@ -68,7 +68,7 @@ var qryStrings= {
     FROM cfdata.tblcomments as co \
     LEFT JOIN tblsessions s on co.sessionId = s.sessionId  \
     LEFT JOIN tblcollections c on s.collectionId = c.collectionId  \
-    LEFT JOIN cfdata.tblusers as colOwner on co.userId = colOwner.userId \
+    LEFT JOIN cfdata.tblusers as colOwner on c.userId = colOwner.userId \
     LEFT JOIN cfdata.tblusers as itemCreator on co.userId = itemCreator.userId \
     LEFT JOIN ( \
         SELECT * FROM \

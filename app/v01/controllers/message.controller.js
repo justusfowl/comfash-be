@@ -1,24 +1,24 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+var _ = require('lodash');
 
 
 var socketCtrl = require('../socket/socket.controller');
 var userCtrl = require('./user.controller');
-var sessionCtrl = require('./session.controller');
+var sessionConnector = require('../connectors/session.connector');
 
 var signalCtrl = require('./signal.controller');
+
+var translateObj = require ('../../config/translations');
 
 async function notifyVote(sessionId, userId) {
     try {
         
         let userDevices = await signalCtrl.getUserDevices(userId);
 
-
-
-
         let senderUserInfo = await userCtrl.getUserInfo(userId);
-        let sessionInfo = await sessionCtrl.getSessionInfo(sessionId);
+        let sessionInfo = await sessionConnector.getSessionInfo(sessionId);
 
         let receiverId = sessionInfo[0].userId;
         let senderName = senderUserInfo[0].userName;
@@ -26,10 +26,17 @@ async function notifyVote(sessionId, userId) {
         let collectionId = sessionInfo[0].collectionId;
         let collectionTitle = sessionInfo[0].collectionTitle;
 
+        let translationOptions =  {
+            userName : senderName,
+            collectionTitle : collectionTitle 
+        };
+
+        let translations = translateObj.prepareItem(translationOptions, "VOTE_OWNER");
+
         let msgOption = {
             senderId : userId, 
             receivers : [receiverId],
-            messageBody : senderName + " has voted for your outfit in #" + collectionTitle, 
+            messageBody : translations.frontEndKey, 
             linkUrl : {
                 targetPage : 'ContentPage',
                 params : {
@@ -43,9 +50,12 @@ async function notifyVote(sessionId, userId) {
         };
 
         var message = {
-            headings : { "en" : "FittingStreamUpdate"}, 
-            contents: {"en": "Voting"},
-            data: msgOption.linkUrl,
+            headings : translations.headings, 
+            contents: translations.content,
+            data: {
+                linkUrl : msgOption.linkUrl,
+                senderName : senderName
+            },
             include_player_ids: userDevices
           };
 
@@ -66,6 +76,169 @@ async function notifyVote(sessionId, userId) {
         console.log(error);
     }
 }
+
+async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
+    try {
+        
+        let senderUserInfo = await userCtrl.getUserInfo(senderId);
+        let senderName = senderUserInfo[0].userName;
+
+        let translationOptions =  {
+            userName : senderName,
+            collectionTitle : collectionTitle 
+        };
+
+        let translations = translateObj.prepareItem(translationOptions, "COLLECTION_INVITE");
+        
+        let collectionId; 
+
+        let receiverIds = []; 
+
+        _.filter(groupUsers, function(o) { 
+            if (o.userIdIsAuthor == 0){
+                receiverIds.push(o.userId);
+                collectionId = o.collectionId;
+            }
+         });
+
+
+        let msgOption = {
+            senderId : senderId, 
+            receivers : receiverIds,
+            messageBody : translations.frontEndKey, 
+            linkUrl : {
+                targetPage : 'ImgCollectionPage',
+                params : {
+                    collectionId : collectionId
+                }
+            }, 
+            isUnread : 1, 
+            collectionId : collectionId
+        };
+
+        let messages = await issueMessage(msgOption);
+
+        if (messages){
+            console.log("messages true! :) ")
+        }
+
+
+        // iterate over all receiverIds 
+        for (var i=0; i<receiverIds.length; i++){
+
+            let receiverId = receiverIds[i]; 
+            let userDevices = await signalCtrl.getUserDevices(receiverId);
+
+            var message = {
+                headings : translations.headings, 
+                contents: translations.content,
+                data: {
+                    linkUrl : msgOption.linkUrl,
+                    senderName : senderName
+                },
+                include_player_ids: userDevices
+              };
+    
+            if (userDevices.length > 0){
+                signalCtrl.sendNotification(message);
+            }
+
+
+        }
+
+        return true;
+       
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
+async function notifySessionCreate(senderId, sessionId) {
+    try {
+        
+        let senderUserInfo = await userCtrl.getUserInfo(senderId);
+
+        let senderName = senderUserInfo[0].userName;
+
+        let sessionInfo = await sessionConnector.getSessionInfo(sessionId);
+        let collectionId = sessionInfo[0].collectionId;
+        let collectionTitle = sessionInfo[0].collectionTitle;
+
+
+        let groupUsers = await getMsgUserPerSession(sessionId);
+
+        let translationOptions =  {
+            userName : senderName,
+            collectionTitle : collectionTitle 
+        };
+
+        let translations = translateObj.prepareItem(translationOptions, "SESSION_CREATE");
+
+        let receiverIds = []; 
+
+        _.filter(groupUsers, function(o) { 
+            if (o.userIdIsAuthor == 0){
+                receiverIds.push(o.userId);
+            }
+         });
+
+
+        let msgOption = {
+            senderId : senderId, 
+            receivers : receiverIds,
+            messageBody : translations.frontEndKey, 
+            linkUrl : {
+                targetPage : 'ImgCollectionPage',
+                params : {
+                    collectionId : collectionId
+                }
+            }, 
+            isUnread : 1, 
+            collectionId : collectionId
+        };
+
+        let messages = await issueMessage(msgOption);
+
+        if (messages){
+            console.log("messages true! :) ")
+        }
+
+
+        // iterate over all receiverIds 
+        for (var i=0; i<receiverIds.length; i++){
+
+            let receiverId = receiverIds[i]; 
+            let userDevices = await signalCtrl.getUserDevices(receiverId);
+
+            var message = {
+                headings : translations.headings, 
+                contents: translations.content,
+                data: {
+                    linkUrl : msgOption.linkUrl,
+                    senderName : senderName
+                },
+                include_player_ids: userDevices
+              };
+    
+            if (userDevices.length > 0){
+                signalCtrl.sendNotification(message);
+            }
+
+
+        }
+
+        return true;
+       
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
+
 
 async function getMsgUserPerSession (sessionId) {
     
@@ -99,7 +272,7 @@ async function getMsgUserPerSession (sessionId) {
  * 
  *         let msgOption = {
             senderId : userId, 
-            receivers : [],
+            receivers : [receiverId1, receiverId2,...],
             messageBody : "You have been invited to a new collection.", 
             linkUrl : {
                 targetPage : 'ImgCollectionPage',
@@ -168,11 +341,13 @@ function list (req,res) {
         m.isUnread, \
         s.userName as senderName,\
         r.userName as receiverName,\
-        sess.sessionThumbnailPath \
+        sess.sessionThumbnailPath, \
+        col.collectionTitle \
         FROM cfdata.tblmessages as m\
         left join cfdata.tblusers as s ON m.senderId = s.userId\
         left join cfdata.tblusers as r ON m.receiverId = r.userId\
         left join cfdata.tblsessions as sess ON m.sessionId = sess.sessionId \
+        left join cfdata.tblcollections as col ON m.collectionId = col.collectionId \
         WHERE m.receiverId = ? \
         ORDER BY m.messageCreated DESC ;'
 
@@ -212,4 +387,12 @@ function markMessageRead(req, res){
 
 
 
-module.exports = { list, issueMessage, getMsgUserPerSession, notifyVote, markMessageRead };
+module.exports = { 
+    list, 
+    issueMessage, 
+    getMsgUserPerSession, 
+    notifyVote, 
+    notifyCollectionCreate, 
+    notifySessionCreate,
+    markMessageRead  
+};
