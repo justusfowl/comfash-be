@@ -108,5 +108,27 @@ async function getUserInfo (userId) {
     
 }
 
+function getUserProfileBase (req,res) {
 
-module.exports = { searchUser, listGroups, upsertProfileAvatar, getUserInfo};
+    let userId = req.params.userId;
+    
+    (async () => {
+        
+        let userInfo = await getUserInfo(userId);
+
+        if (userInfo && userInfo.length > 0){
+            res.json(userInfo[0])
+        }else{
+            res.json([])
+        }
+        
+
+    })();
+
+
+}
+
+
+
+
+module.exports = { searchUser, listGroups, upsertProfileAvatar, getUserInfo, getUserProfileBase};

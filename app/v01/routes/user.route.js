@@ -17,13 +17,19 @@ router.route('/messages')
 
     .get(messageCtrl.list)
 
+router.route('/messages/cntUnread')
+
+    .get(messageCtrl.getNoUnread)
+
 router.route('/messages/:messageId')
 
-    .put(messageCtrl.markMessageRead)
+    .put(messageCtrl.updateMessageReadStatus)
 
 router.route('/avatar')
     .post(userCtrl.upsertProfileAvatar)
 
+router.route("/profile/:userId")
+    .get(userCtrl.getUserProfileBase)
 
 router.route('/push/registerDevice')
     

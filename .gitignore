@@ -36,6 +36,7 @@ testem.log
 Gruntfile.js
 /images
 /public
+/web
 
 .env
 

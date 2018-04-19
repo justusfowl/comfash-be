@@ -1,31 +1,32 @@
-var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
+var jwt = require('express-jwt');
+var jwks = require('jwks-rsa');
 const config = require('../../config/config');
 
-function verifyToken(req, res, next) {
 
-  // check header or url parameters or post parameters for token
-  var token = req.headers['x-access-token'];
+var verifyToken = jwt({
+  secret: jwks.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: "https://comfash.eu.auth0.com/.well-known/jwks.json"
+  }),
+  aud: 'https://comfash.local:9999/api/v01',
+  iss: "https://comfash.eu.auth0.com/",
+  algorithms: ['RS256']
+});
 
-  if (!token) 
-    return res.status(403).send({ auth: false, message: 'No token provided.' });
 
-  // verifies secret and checks expiration
-  jwt.verify(token, config.auth.jwtSecret, function(err, decoded) {      
-    if (err) 
-      return res.status(401).send({ auth: false, message: 'Failed to authenticate token.' });    
+var successAuth = function(req, res, next) {
 
-    // if everything is good, save to request for use in other routes
-    req.auth = {
-        userId : decoded.userId
-    };
 
-    next();
-  });
+  req["auth"] = {
+    userId: req.user.email
+  }
+
+
+  next();
 
 }
 
-function verifyTokenSync (token){
-  return jwt.verify(token, config.auth.jwtSecret);
-}
 
-module.exports = { verifyToken, verifyTokenSync } ;
+module.exports = { verifyToken, successAuth } ;

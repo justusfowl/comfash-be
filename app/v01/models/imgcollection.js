@@ -19,7 +19,15 @@ module.exports = (sequelize, DataTypes) => {
     collectionTitle: {
         type: DataTypes.TEXT,
         allowNull: false
-    }
+    },
+    collectionDescription: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    privacyStatus: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
 }, {
     timestamps : false
 });

@@ -4,44 +4,40 @@ const Op = Sequelize.Op;
 
 var socketCtrl = require('../socket/socket.controller');
 var messageCtrl = require('../controllers/message.controller');
+var groupUserCtrl = require('../controllers/groupuser.controller');
 var _ = require("lodash");
+
+var collectionConnector = require('../connectors/collection.connector');
+
 
 function addToArray (obj, key, array){
 
     let index = array.findIndex(x => x[key] === obj[key])
 
     if (obj[key]!=null && index == -1){
-        array.push(obj)
+        array.push(obj); 
+
     }
 }
+
 
 
 function listQry (req,res) {
 
     let userId, whereStr, qryOption; 
+    let isSessionRequested = false;
 
-    userId = req.params.userId; 
+    userId = req.params.userId;
 
-    /*
-    
+    let requestUserId = req.auth.userId;
 
-    if (!userId){
-        return res.status(500).send({ auth: false, message: 'No userid provided' });
-    }
-   
-    var whereStr = ' WHERE c.userId = ? '; 
-    
-    */
-
-    whereStr = ' WHERE c.userId = ? ';
-    qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
+    whereStr = ' WHERE (g.userIdIsAuthor is not null or c.privacyStatus = 0) AND ';
+    qryOption = { raw: true, replacements: [requestUserId], type: models.sequelize.QueryTypes.SELECT}; 
 
     if (req.params.collectionId){
-
-        userId = req.auth.userId;
         
-        whereStr = ' WHERE c.collectionId = ? ';
-        qryOption = { raw: true, replacements: [req.params.collectionId], type: models.sequelize.QueryTypes.SELECT}; 
+        whereStr += ' c.collectionId = ? ';
+        qryOption.replacements.push(req.params.collectionId);
 
         if (req.params.sessionId){
             whereStr += " AND s.sessionId = ? "
@@ -49,10 +45,39 @@ function listQry (req,res) {
         }
          
     }
+    else if (req.query.session){
+        isSessionRequested = true;
+        whereStr += ' s.sessionId in ( ';
+
+        let reqSessionIds = req.query.session;
+
+        if (typeof(reqSessionIds) == 'object'){
+            for (var i=0; i<reqSessionIds.length; i++){
+                whereStr += '?';
+    
+                if (i != (reqSessionIds.length - 1)){
+                    whereStr += ','
+                }
+    
+                qryOption.replacements.push(reqSessionIds[i]);
+            }
+        }else if (typeof(reqSessionIds) == 'string'){
+            whereStr += '?';
+            qryOption.replacements.push(reqSessionIds);
+        }
+
+        whereStr += ") "
+
+    }
+    else{
+        whereStr += ' c.userId = ?';
+        qryOption.replacements.push(userId);
+    }
 
     let qryStr = 'SELECT \
     c.*, \
     colUs.userName, \
+    colUs.userAvatarPath as userAvatarPath, \
     s.sessionId, \
     s.sessionCreated, \
     s.sessionItemPath, \
@@ -60,6 +85,7 @@ function listQry (req,res) {
     s.sessionThumbnailPath,\
     s.width,\
     s.height,\
+    s.primeColor,\
     co.commentId, \
     co.commentText, \
     co.commentCreated, \
@@ -68,14 +94,26 @@ function listQry (req,res) {
     co.userId as commentUserId, \
     co.prcSessionItem, \
     us.userName as commentUserName, \
+    us.userAvatarPath as commentUserAvatarPath, \
     v.voteType, \
     v.voteChanged, \
-    v.userId as voteUserId \
+    v.userId as voteUserId, \
+    g.userIdIsAuthor as priv, \
+    t.tagId, \
+    t.tagUrl, \
+    t.xRatio as tagXRatio, \
+    t.yRatio as tagYRatio, \
+    t.tagBrand, \
+    t.tagImage, \
+    t.tagSeller, \
+    t.tagTitle \
     FROM tblcollections c\
     LEFT JOIN tblsessions s on c.collectionId = s.collectionId\
     LEFT JOIN tblcomments co on s.sessionId = co.sessionId \
+    LEFT JOIN tbltags t on s.sessionId = t.sessionId \
     LEFT JOIN tblusers us on co.userId = us.userId\
     LEFT JOIN tblusers colUs on c.userId = colUs.userId\
+    LEFT JOIN (SELECT * FROM tblgroupusers WHERE userId = ? ) as g on c.collectionId = g.collectionId \
     LEFT JOIN tblvotes v on s.sessionId = v.sessionId ' + whereStr +
     ' ORDER BY c.collectionId, s.sessionId, co.commentId;';
 
@@ -85,6 +123,7 @@ function listQry (req,res) {
     ).then(collections => {
 
         var result = [];
+        var allSessions = [];
 
         var nestCollection = function(element) {
             
@@ -96,7 +135,8 @@ function listQry (req,res) {
                 "xRatio": element.xRatio,
                 "yRatio" : element.yRatio, 
                 "prcSessionItem" : element.prcSessionItem, 
-                "commentUserName" : element.commentUserName
+                "commentUserName" : element.commentUserName, 
+                "commentUserAvatarPath" : element.commentUserAvatarPath
                };
 
             var vote = {
@@ -106,28 +146,48 @@ function listQry (req,res) {
                 "userId" : element.voteUserId
                };
 
+            
+            var tag = {
+                "tagId" : element.tagId, 
+                "tagUrl" : element.tagUrl,
+                "xRatio" : element.tagXRatio,
+                "yRatio" : element.tagYRatio, 
+                "tagTitle" : element.tagTitle, 
+                "tagBrand" : element.tagBrand, 
+                "tagSeller" : element.tagSeller, 
+                "tagImage" : element.tagImage
+               };
+
             var collection = {
                 "collectionId" : element.collectionId,
                 "collectionTitle" : element.collectionTitle, 
+                "collectionDescription" : element.collectionDescription, 
                 "collectionCreated" : element.collectionCreated,
                 "userId" : element.userId,
                 "userName" : element.userName,
+                "privacyStatus" : element.privacyStatus,
                 "sessions": []
              }
 
             var session = {
                 "userId" : element.userId,
+                "userName" : element.userName,
+                "userAvatarPath" : element.userAvatarPath,
+                "collectionId" : element.collectionId,
+                "collectionTitle" : element.collectionTitle, 
                 "sessionId" : element.sessionId,
                 "sessionItemPath" : element.sessionItemPath,
                 "sessionItemType" : element.sessionItemType,
                 "sessionThumbnailPath" : element.sessionThumbnailPath,
                 "height" : element.height, 
                 "width" : element.width,
+                "primeColor" : element.primeColor,
                 "comments" : [], 
-                "votes"  : []
+                "votes"  : [], 
+                "tags" : []
              };
 
-             if (element.voteUserId == userId){
+             if (element.voteUserId == requestUserId){
                  session.myVote = vote;
              }
 
@@ -145,7 +205,9 @@ function listQry (req,res) {
 
             addToArray(comment, "commentId", session.comments);
             addToArray(vote, "userId", session.votes);
+            addToArray(tag, "tagId", session.tags);
             addToArray(session, "sessionId", collection.sessions);
+            addToArray(session, "sessionId", allSessions);
 
             result.push(collection);
 
@@ -163,12 +225,15 @@ function listQry (req,res) {
 
                 addToArray(comment, "commentId", session.comments);
                 addToArray(vote, "userId", session.votes);
+                addToArray(tag, "tagId", session.tags);
                 addToArray(session, "sessionId", result[collectionIndex].sessions);
+                addToArray(session, "sessionId", allSessions);
 
                 sessionIndex = 0;
 
             }else{
                 addToArray(comment, "commentId", result[collectionIndex].sessions[sessionIndex].comments);
+                addToArray(tag, "tagId",  result[collectionIndex].sessions[sessionIndex].tags);
                 addToArray(vote, "userId", result[collectionIndex].sessions[sessionIndex].votes);
             }
           }
@@ -183,89 +248,190 @@ function listQry (req,res) {
 
             _(collection.sessions).forEach(function (session){
 
-                let votes = session.votes; 
+                let votes = session.votes;
+                let comments = session.comments;
 
                 let count = votes.length; 
                 let avg = _.meanBy(votes, 'voteType');
 
-                let voteStats = {
-                    "count" : count, 
-                    "avg" : avg
-                }
-                
-                session["voteStats"] = voteStats;
+                let countComments = comments.length; 
+
+
+                session["voteCnt"] = count;
+                session["voteAvg"] = avg;
+
+                session["commentCnt"] = countComments;
             });
 
 
         });
 
-        res.json(result);
-        console.log(result)
+        if (isSessionRequested){
+            res.json(allSessions);
+            console.log(allSessions)
+
+        }else{
+            res.json(result);
+            console.log(result)
+        }
+
     })
 }
 
+function listDetail (req,res) {
+
+    let userId, collectionId, whereStr, qryOption; 
+
+    collectionId = req.params.collectionId;
+    userId = req.auth.userId;
+
+    whereStr = ' WHERE c.userId = ? and c.collectionId = ? ';
+    qryOption = { raw: true, replacements: [userId, collectionId], type: models.sequelize.QueryTypes.SELECT}; 
+
+    let qryStr = 'SELECT \
+            c.*, \
+            g.userId as groupUserId, \
+            g.userIdIsAuthor, \
+            u.userName as groupUserName \
+            FROM cfdata.tblgroupusers as g \
+            inner join cfdata.tblcollections as c on g.collectionId = c.collectionId \
+            inner join cfdata.tblusers as u on g.userId = u.userId \
+            '
+            + whereStr + ';';
+
+    models.sequelize.query(
+        qryStr,
+        qryOption
+    ).then(collection => {
+
+        let collectionDetails;
+        let sharedWithUsers = [];
+
+        if (collection.length > 0){
+            _(collection).forEach(function (groupUser){
+
+                if (groupUser.userIdIsAuthor == 1){
+                    collectionDetails = {
+                        "collectionId" : groupUser.collectionId,
+                        "collectionTitle" : groupUser.collectionTitle,
+                        "collectionDescription" : groupUser.collectionDescription,
+                        "privacyStatus" : groupUser.privacyStatus
+                    }
+                }else{
+                    sharedWithUsers.push({
+                        "userId" : groupUser.groupUserId, 
+                        "userName" : groupUser.groupUserName
+                    })
+                }
+    
+            });
+    
+            collectionDetails["sharedWithUsers"] = sharedWithUsers;
+            res.json(collectionDetails);
+            console.log(collectionDetails)
+        }else{
+            res.json([]);
+            console.log([])
+        }
+       
+    })
+}
+
+function update(req, res){
+
+    let collectionId = req.params.collectionId;
+    let userId = req.auth.userId; 
+
+    const collectionTitle = req.body.collectionTitle;
+    const collectionDesc = req.body.collectionDescription;
+    const privacyStatus = req.body.privacyStatus; 
+    const usersSharedWith = req.body.sharedWithUsers;
+
+    (async () => {
+            
+
+        let collectionInfo = await collectionConnector.getCollectionInfo(collectionId);
+
+        if (collectionInfo.length > 0){
+
+            if (collectionInfo[0].userId == userId){
+
+                const collection = models.tblcollections.update(
+                    {        
+                        collectionTitle : collectionTitle, 
+                        collectionDescription : collectionDesc,
+                        privacyStatus : privacyStatus,
+                    },
+                    {returning: true, where: {collectionId: collectionId} }
+                ).then(collection => {
+            
+                    console.log("collection updated"); 
+                    (async () => {
+
+                        let addedGroupUsers = await groupUserCtrl.deltaLoadGroupUsers(collectionId, userId, usersSharedWith);
+
+                        res.json(collection);
+
+                    
+                        let collectionInfo = await collectionConnector.getCollectionInfo(collectionId);
+                        await messageCtrl.notifyCollectionCreate(userId, collectionInfo.collectionTitle, addedGroupUsers)
+                    })();
+                    
+                    
+                    return null;
+                    
+                })
+                .catch(error => {
+                    // Ooops, do some error-handling
+                    console.log(error); 
+                    res.send(500, error);
+                })
+
+
+            }else{
+                res.send(401, "Not authorized to update this collection");
+            }
+        }else{
+            res.send(404, "Not found");
+        }
+
+        return true;
+        
+   
+    })();
+
+    
+}
 
 
 function create(req, res){
 
     const userId = req.auth.userId;
+    
+    const collectionTitle = req.body.collectionTitle;
+    const collectionDesc = req.body.collectionDescription;
+    const privacyStatus = req.body.privacyStatus; 
     const usersSharedWith = req.body.sharedWithUsers;
-    const collectionTitle = req.body.collectionTitle; 
 
     const collection = models.tblcollections.build({
         collectionTitle : collectionTitle, 
+        collectionDescription : collectionDesc,
+        privacyStatus : privacyStatus,
         userId : userId
       }).save()
       .then(newCollection => {
 
-        var groupUsers = [];
 
-        // add all invitees to the group if there are some
-        if (usersSharedWith){
+        (async () => {
 
-            for (var i = 0; i<usersSharedWith.length; i++){
+            let addedGroupUsers = await groupUserCtrl.bulkInsertGroupUsers(userId, newCollection.collectionId, usersSharedWith, true);
 
-                let sharedUserId = usersSharedWith[i].userId; 
+            res.json(newCollection);
 
-                let user = {
-                    collectionId : newCollection.collectionId, 
-                    userId : sharedUserId, 
-                    userIdIsAuthor : 0
-                }
-                groupUsers.push(user)
-                
-            }
-        }
+            await messageCtrl.notifyCollectionCreate(userId, collectionTitle, addedGroupUsers);
 
-        // add author to his group
-        groupUsers.push({
-            collectionId : newCollection.collectionId, 
-            userId : userId, 
-            userIdIsAuthor : 1
-        })
+        })();
 
-        models.tblgroupusers.bulkCreate(groupUsers)
-        .then(function(response){
-
-            console.log("relvant groupusers created"); 
-            
-            res.json(response);
-
-
-            (async () => {
-                await messageCtrl.notifyCollectionCreate(userId, collectionTitle, groupUsers)
-            })();
-    
-            return null;
-
-            // create messages and send push notifications to invitees
-
-
-        })
-        .catch(function(error){
-            console.log(error);
-            res.send(500, error);
-        })
 
           return null;
       })
@@ -277,11 +443,14 @@ function create(req, res){
 
 }
 
-function deleteItem(req, res){ 
+function deleteItem(req, res){
+
+    let userId = req.auth.userId; 
 
     models.tblcollections.destroy({
         where: {
-            collectionId: req.params.collectionId
+            collectionId: req.params.collectionId, 
+            userId : userId
           }
     }).then(function(collection) {
         if (collection) {				
@@ -296,4 +465,4 @@ function deleteItem(req, res){
 
 }
 
-module.exports =   { listQry, create, deleteItem };
+module.exports =   { listQry, listDetail, create, update, deleteItem };

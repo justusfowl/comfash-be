@@ -51,12 +51,9 @@ var socketCtrl = require('./app/v01/socket/socket.controller')
 io.use(socketioJwt.authorize({
 	secret: config.auth.jwtSecret,
 	handshake: true
-  }));
-
+}));
 
 io.on('connection', socketCtrl.handleConnect);
-
-app.use(bodyParser({limit: '50mb'}));
 
 app.use(bodyParser.urlencoded({ extended: true, limit: '200mb' }));
 app.use(bodyParser.json());
@@ -64,7 +61,8 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.use('/images', express.static('public/img'));
-app.use(express.static('public'));
+app.use('/data', express.static('public'));
+app.use(express.static('web/dist'));
 
 
 // REGISTER OUR ROUTES

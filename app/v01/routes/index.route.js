@@ -14,11 +14,11 @@ router.use('/hb', function (req, res){
     res.json({"response": "healthy"})
 });
 
-router.use('/imgcollection', VerifyToken.verifyToken, imgCollectionRoutes ); 
+router.use('/imgcollection', [VerifyToken.verifyToken, VerifyToken.successAuth], imgCollectionRoutes ); 
 
-router.use('/user', VerifyToken.verifyToken, userRoutes ); 
+router.use('/user', [VerifyToken.verifyToken, VerifyToken.successAuth], userRoutes ); 
 
-router.use('/stream', VerifyToken.verifyToken, streamRoutes ); 
+router.use('/stream', [VerifyToken.verifyToken, VerifyToken.successAuth], streamRoutes ); 
 
 router.use('/auth', authRoutes );
 

@@ -3,7 +3,6 @@ var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 var _ = require('lodash');
 
-
 var socketCtrl = require('../socket/socket.controller');
 var userCtrl = require('./user.controller');
 var sessionConnector = require('../connectors/session.connector');
@@ -11,6 +10,8 @@ var sessionConnector = require('../connectors/session.connector');
 var signalCtrl = require('./signal.controller');
 
 var translateObj = require ('../../config/translations');
+
+var util = require("../../util/util");
 
 async function notifyVote(sessionId, userId) {
     try {
@@ -332,6 +333,8 @@ function list (req,res) {
 
     var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
 
+    let topStr = util.getLimitOffsetForQryStr(req);
+
     let qryStr = '\
         SELECT \
         m.messageId,\
@@ -349,7 +352,8 @@ function list (req,res) {
         left join cfdata.tblsessions as sess ON m.sessionId = sess.sessionId \
         left join cfdata.tblcollections as col ON m.collectionId = col.collectionId \
         WHERE m.receiverId = ? \
-        ORDER BY m.messageCreated DESC ;'
+        ORDER BY m.messageCreated DESC \
+        ' + topStr + ';';
 
     models.sequelize.query(
         qryStr,
@@ -362,14 +366,25 @@ function list (req,res) {
 
 }
 
-function markMessageRead(req, res){
+function getNoUnread(req, res){
+
+    let userId = req.auth.userId;
+
+    models.tblmessages.count({ where: {'receiverId': userId, "isUnread" : 1} }).then(c => {
+        res.json({"isUnreadCnt" : c});
+      })
+
+}
+
+function updateMessageReadStatus(req, res){
 
     console.log("HIER NOCH AUTHORISIERUNG AUF EIGENE MESSAGES EINSCHRÄNKEN");
 
     let messageId = req.params.messageId;
+    let messageIsRead = req.body.isUnread;
 
     models.tblmessages.update({
-        isUnread: 0
+        isUnread: messageIsRead
       }, {
         where: { messageId: messageId }
       }).then(function(message) {
@@ -394,5 +409,6 @@ module.exports = {
     notifyVote, 
     notifyCollectionCreate, 
     notifySessionCreate,
-    markMessageRead  
+    updateMessageReadStatus, 
+    getNoUnread
 };

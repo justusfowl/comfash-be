@@ -36,7 +36,11 @@ module.exports = (sequelize, DataTypes) => {
     collectionId: {
         type: DataTypes.INTEGER,
         allowNull: false
-    }
+    },
+    primeColor: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
 }, {
     timestamps : false
 });

@@ -26,6 +26,10 @@ module.exports = (sequelize, DataTypes) => {
     userAvatarPath: {
         type: DataTypes.TEXT,
         allowNull: true
+    }, 
+    userCreatedAt : {
+        type: DataTypes.DATE,
+        allowNull: false
     }
 }, {
     timestamps : false
