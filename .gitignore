@@ -35,8 +35,12 @@ testem.log
 /typings
 Gruntfile.js
 /images
-/public
-/web
+/public/a/*
+/public/i/*
+/public/t/*
+/public/v/*
+
+/web/*
 
 .env
 
