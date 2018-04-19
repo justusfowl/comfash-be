@@ -42,6 +42,10 @@ const config = {
       restKey: process.env.SIGNAL_REST_KEY, 
       userAuthKey : process.env.SIGNAL_AUTH_KEY,
       appId : process.env.SIGNAL_APP_ID
+    }, 
+
+    auth : {
+      auth0_secret : process.env.AUTH0_SECRET
     }
   };
   

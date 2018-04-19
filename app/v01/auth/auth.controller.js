@@ -5,6 +5,9 @@ const config = require('../../config/config');
 
 var models = require('../models');
 
+const uuidv1 = require('uuid/v1');
+
+
 function checkLogin(req, res){
 
     var userId = req.body.userId;
@@ -54,32 +57,54 @@ function checkLogin(req, res){
 
 }
 
+function getRandomInt(max) {
+    return (Math.floor(Math.random() * Math.floor(max))).toString();
+  }
+
 function registerUser ( req, res ){
 
-    let password = req.body.password;
-    let hashedPw = bcrypt.hashSync(password, 10);
+    let user = req.body.user;
+    let context = req.body.context
+    let secret = req.body.auth0_secret;
 
-    const comment = models.tblusers.build({
-        userId: req.body.userId,
-        userBirthDate: req.body.userBirthDate, 
-        userName : req.body.username, 
-        password : hashedPw
-    }).save()
-      .then(resultUser => {
-        // you can now access the currently saved task with the variable anotherTask... nice!
-        console.log("after save"); 
-        res.json(resultUser);
-      })
-      .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error);
+    
 
-        if (error.original.errno == 1062){
-            res.send(500, "Your user-ID has already been used");
-        }else{
-            res.send(500, error.name);
-        }
-      })
+    if (secret == config.auth.auth0_secret){
+
+        let newId = uuidv1() + getRandomInt(200);
+
+        models.tblusers.build({
+            userId: newId,
+            userName : user.nickname || user.email.substring(0,user.email.indexOf("@")), 
+            userAvatarPath : user.picture_large,
+            userCreatedAt : new Date()
+        }).save()
+          .then(resultUser => {
+            // you can now access the currently saved task with the variable anotherTask... nice!
+            console.log("registering new user successful: ", resultUser.userId); 
+
+            let resp = {
+                "cf_id" : resultUser.userId
+            };
+
+            res.json(resp);
+
+          })
+          .catch(error => {
+            // Ooops, do some error-handling
+            console.log(error);
+    
+            if (error.original.errno == 1062){
+                res.send(500, "Your user-ID has already been used");
+            }else{
+                res.send(500, error.name);
+            }
+          })
+    }else{
+        res.send(401, "Unauthorized");
+    }
+
+
 
 }
 
