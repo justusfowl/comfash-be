@@ -20,7 +20,7 @@ var successAuth = function(req, res, next) {
 
 
   req["auth"] = {
-    userId: req.user.email
+    userId: req.user["https://app.comfash.com/cf_id"]
   }
 
 
