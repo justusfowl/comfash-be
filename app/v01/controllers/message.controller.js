@@ -102,7 +102,6 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
             }
          });
 
-
         let msgOption = {
             senderId : senderId, 
             receivers : receiverIds,
@@ -122,7 +121,6 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
         if (messages){
             console.log("messages true! :) ")
         }
-
 
         // iterate over all receiverIds 
         for (var i=0; i<receiverIds.length; i++){
@@ -144,7 +142,6 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
                 signalCtrl.sendNotification(message);
             }
 
-
         }
 
         return true;
@@ -154,7 +151,6 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
         console.log(error);
     }
 }
-
 
 async function notifySessionCreate(senderId, sessionId) {
     try {
@@ -185,7 +181,6 @@ async function notifySessionCreate(senderId, sessionId) {
             }
          });
 
-
         let msgOption = {
             senderId : senderId, 
             receivers : receiverIds,
@@ -205,7 +200,6 @@ async function notifySessionCreate(senderId, sessionId) {
         if (messages){
             console.log("messages true! :) ")
         }
-
 
         // iterate over all receiverIds 
         for (var i=0; i<receiverIds.length; i++){
@@ -227,7 +221,6 @@ async function notifySessionCreate(senderId, sessionId) {
                 signalCtrl.sendNotification(message);
             }
 
-
         }
 
         return true;
@@ -237,9 +230,6 @@ async function notifySessionCreate(senderId, sessionId) {
         console.log(error);
     }
 }
-
-
-
 
 async function getMsgUserPerSession (sessionId) {
     

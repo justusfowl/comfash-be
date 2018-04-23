@@ -202,7 +202,14 @@ function uploadImage(req, res){
     console.log(" HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS")
 
     var imageSrc = req.body.src;
-    var imagePurchaseTags = JSON.parse(req.body.newTags);
+    var imagePurchaseTags;
+
+    try{
+        imagePurchaseTags = JSON.parse(req.body.newTags);
+    }catch(err){
+        imagePurchaseTags = [];
+    }
+     
     var userId = req.auth.userId;
     var resultFilename = req.file.filename;
     var fileType = req.file.mimetype;

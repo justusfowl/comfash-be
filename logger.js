@@ -81,8 +81,8 @@ const sqlLogger = winston.createLogger({
         new winston.transports.Console({
             format: winston.format.simple()
           }),
-        sqlTransporCombined, 
-        sqlTransportError
+        sqlTransportError,
+        sqlTransporCombined
     ]
   });
   
