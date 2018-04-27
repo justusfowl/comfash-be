@@ -115,7 +115,7 @@ function listQry (req,res) {
     LEFT JOIN tblusers colUs on c.userId = colUs.userId\
     LEFT JOIN (SELECT * FROM tblgroupusers WHERE userId = ? ) as g on c.collectionId = g.collectionId \
     LEFT JOIN tblvotes v on s.sessionId = v.sessionId ' + whereStr +
-    ' ORDER BY c.collectionId, s.sessionId, co.commentId;';
+    ' ORDER BY c.collectionId, s.sessionCreated desc, co.commentId;';
 
     models.sequelize.query(
         qryStr,

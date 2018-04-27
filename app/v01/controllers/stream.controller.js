@@ -21,15 +21,19 @@ function getQryString(key, flagIsUserId = false){
             itemCreator.userAvatarPath as itemCreatorAvatarPath,  \
             s.sessionItemPath,  \
             s.sessionThumbnailPath, \
+            s.sessionCreated, \
             c.collectionTitle,  \
+            s.primeColor, \
             c.collectionId,  \
             colOwner.userName as colOwner,  \
             colOwner.userId as colOwnerId,  \
+            colOwner.userAvatarPath as colOwnerAvatarPath,  \
             comStats.commentCnt,  \
-            voteStats.votesCnt,   \
-            voteStats.votesAvg, \
+            voteStats.voteCnt,   \
+            voteStats.voteAvg, \
             item.voteChanged as refDate, \
             myVote.voteType as myVoteType, \
+            myVote.voteChanged as myVoteChanged, \
             1 as itemType  \
         FROM cfdata.tblvotes as item \
         LEFT JOIN tblsessions s on item.sessionId = s.sessionId  \
@@ -47,8 +51,8 @@ function getQryString(key, flagIsUserId = false){
             ) as comStats on item.sessionId = comStats.sessionId  \
         LEFT JOIN ( \
             select  \
-                count(*) as votesCnt, \
-                avg(voteType) as votesAvg, \
+                count(*) as voteCnt, \
+                avg(voteType) as voteAvg, \
                 sessionId  \
             from cfdata.tblvotes  \
             group by sessionId \
@@ -64,15 +68,19 @@ function getQryString(key, flagIsUserId = false){
             itemCreator.userAvatarPath as itemCreatorAvatarPath,  \
             s.sessionItemPath,  \
             s.sessionThumbnailPath, \
+            s.sessionCreated, \
+            s.primeColor, \
             c.collectionTitle,  \
             c.collectionId,  \
             colOwner.userName as colOwner,  \
             colOwner.userId as colOwnerId,  \
+            colOwner.userAvatarPath as colOwnerAvatarPath,  \
             comStats.commentCnt,  \
-            voteStats.votesCnt,   \
-            voteStats.votesAvg,  \
+            voteStats.voteCnt,   \
+            voteStats.voteAvg,  \
             item.commentCreated as refDate, \
             myVote.voteType as myVoteType, \
+            myVote.voteChanged as myVoteChanged, \
             2 as itemType  \
         FROM cfdata.tblcomments as item \
         LEFT JOIN tblsessions s on item.sessionId = s.sessionId  \
@@ -90,8 +98,8 @@ function getQryString(key, flagIsUserId = false){
             ) as comStats on item.sessionId = comStats.sessionId  \
         LEFT JOIN ( \
             select  \
-                count(*) as votesCnt, \
-                avg(voteType) as votesAvg, \
+                count(*) as voteCnt, \
+                avg(voteType) as voteAvg, \
                 sessionId  \
             from cfdata.tblvotes  \
             group by sessionId \

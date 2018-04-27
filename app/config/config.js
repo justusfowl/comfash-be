@@ -45,7 +45,15 @@ const config = {
     }, 
 
     auth : {
-      auth0_secret : process.env.AUTH0_SECRET
+      auth0_secret : process.env.AUTH0_SECRET, 
+      auth0_client_id: process.env.AUTH0_CLIENT_ID, 
+      auth0_client_secret: process.env.AUTH0_CLIENT_SECRET, 
+      auth0_audience : process.env.AUTH0_AUDIENCE, 
+      auth0_domain: process.env.AUTH0_DOMAIN
+    }, 
+    facebook : {
+      "app_id" : process.env.FB_APP_ID, 
+      "app_secret" : process.env.FB_APP_SECRET, 
     }
   };
   

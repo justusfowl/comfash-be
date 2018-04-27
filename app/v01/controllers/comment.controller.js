@@ -2,6 +2,31 @@ var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
+
+function listCommentForSession (req,res) {
+
+    let userId = req.auth.userId;
+    let sessionId = req.params.sessionId;
+
+    var qryOption = { raw: true, replacements: [sessionId], type: models.sequelize.QueryTypes.SELECT}; 
+    
+    let qryStr = 'SELECT c.*,u.userAvatarPath as commentUserAvatarPath, u.userName as commentUserName  FROM cfdata.tblcomments as c  \
+    LEFT JOIN tblusers as u on c.userId = u.userId \
+    where c.sessionId = ?  \
+    ORDER BY c.commentCreated DESC';
+
+    models.sequelize.query(
+        qryStr,
+        qryOption
+    ).then(compareHist => {
+
+        console.log("comparehist saved"); 
+        res.json(compareHist);
+
+    })
+
+}
+
 function create(req, res){
 
     const comment = models.tblcomments.build({
@@ -42,4 +67,4 @@ function deleteItem(req, res){
     });
 }
 
-module.exports =   { create, deleteItem };
+module.exports =   { listCommentForSession, create, deleteItem };

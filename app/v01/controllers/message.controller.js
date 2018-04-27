@@ -333,6 +333,7 @@ function list (req,res) {
         m.messageCreated, \
         m.isUnread, \
         s.userName as senderName,\
+        s.userAvatarPath as senderAvatarPath,\
         r.userName as receiverName,\
         sess.sessionThumbnailPath, \
         col.collectionTitle \

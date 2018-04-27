@@ -74,6 +74,8 @@ router.route('/:collectionId/session/:sessionId')
 
 router.route('/:collectionId/session/:sessionId/comment')
 
+    .get(commentCtrl.listCommentForSession)
+
     .post(commentCtrl.create)
 
 router.route('/:collectionId/session/:sessionId/comment/:commentId')
