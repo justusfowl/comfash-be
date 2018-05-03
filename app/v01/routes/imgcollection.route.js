@@ -30,6 +30,10 @@ router.route('/room/:userId')
 
     .get(imgCollectionCtrl.listQry)
 
+router.route('/myCollections')
+
+    .get(imgCollectionCtrl.listMyCollections)
+
 router.route('/sessions')
 
     .get(imgCollectionCtrl.listQry)

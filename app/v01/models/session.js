@@ -41,6 +41,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false
     },
+    primeFont: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    filterOption: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    }
 }, {
     timestamps : false
 });

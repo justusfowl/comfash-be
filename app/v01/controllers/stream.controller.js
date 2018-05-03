@@ -43,7 +43,7 @@ function getQryString(key, flagIsUserId = false){
         LEFT JOIN ( \
             SELECT * FROM \
             cfdata.tblvotes  \
-            WHERE userID = ? ) as myVote on item.sessionId = myVote.sessionId \
+            WHERE userId = ? ) as myVote on item.sessionId = myVote.sessionId \
         LEFT JOIN ( \
             select count(*) as commentCnt, sessionId  \
             from cfdata.tblcomments  \

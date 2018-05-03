@@ -16,6 +16,7 @@ function upsertVote(req, res){
         res.json(vote);
 
         (async () => {
+            // send notification to owner of the session
             await messageCtrl.notifyVote(sessionId, userId);
         })();
 

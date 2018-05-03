@@ -21,6 +21,29 @@ function addToArray (obj, key, array){
 }
 
 
+function listMyCollections (req,res) {
+
+    let userId = req.auth.userId;
+    
+
+    var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
+    
+    let qryStr = 'SELECT c.* FROM cfdata.tblcollections as c  \
+    where c.userId = ?  \
+    ORDER BY c.collectionCreated DESC';
+
+    models.sequelize.query(
+        qryStr,
+        qryOption
+    ).then(myCollections => {
+
+        res.json(myCollections);
+
+    })
+
+}
+
+
 
 function listQry (req,res) {
 
@@ -86,6 +109,8 @@ function listQry (req,res) {
     s.width,\
     s.height,\
     s.primeColor,\
+    s.primeFont, \
+    s.filterOption, \
     co.commentId, \
     co.commentText, \
     co.commentCreated, \
@@ -182,6 +207,8 @@ function listQry (req,res) {
                 "height" : element.height, 
                 "width" : element.width,
                 "primeColor" : element.primeColor,
+                "primeFont" : element.primeFont,
+                "filterOption" : element.filterOption,
                 "comments" : [], 
                 "votes"  : [], 
                 "tags" : []
@@ -465,4 +492,4 @@ function deleteItem(req, res){
 
 }
 
-module.exports =   { listQry, listDetail, create, update, deleteItem };
+module.exports =   { listMyCollections, listQry, listDetail, create, update, deleteItem };

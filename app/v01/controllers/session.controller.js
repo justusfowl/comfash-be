@@ -143,6 +143,32 @@ var storageImg = multer.diskStorage({
 
 var uploadImageMw = multer({ storage: storageImg })
 
+// function to calculate color contrast for font-color
+
+function luminanace(r, g, b) {
+    var a = [r, g, b].map(function (v) {
+        v /= 255;
+        return v <= 0.03928
+            ? v / 12.92
+            : Math.pow( (v + 0.055) / 1.055, 2.4 );
+    });
+    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
+function contrast(rgb1, rgb2) {
+    return (luminanace(rgb1[0], rgb1[1], rgb1[2]) + 0.05)
+         / (luminanace(rgb2[0], rgb2[1], rgb2[2]) + 0.05);
+}
+
+function getHex(rgbArray){
+
+    let rgbStr = "rgb(" + rgbArray[0] + "," + rgbArray[1] + "," + rgbArray[2] + ")"
+    let hexColor = rgb2hex(rgbStr).hex;
+
+    return hexColor;
+
+}
+
 function getImageColors(resultFile){
 
     var promise = new Promise(function(resolve, reject) {
@@ -153,18 +179,31 @@ function getImageColors(resultFile){
             console.log(me);
     
             let primColor = colors[0]._rgb; 
-    
-    
-            let rgbStr = "rgb(" + primColor[0] + "," + primColor[1] + "," + primColor[2] + ")"
-            let hexColor = rgb2hex(rgbStr).hex;
-            console.log(hexColor);
+            
+            let whiteColor = [255,255,255]; 
+            let darkColor = [61, 61, 61] //[51, 67, 75];
 
-            resolve(hexColor);
-    
+            let whiteContrast = contrast(primColor, whiteColor);
+            let darkContrast = contrast(primColor, darkColor);
+
+            let fontColor;
+
+            if (whiteContrast < darkContrast){
+                fontColor = whiteColor;
+            }else{
+                fontColor = darkColor;
+            }
+
+            let hexColorPrime = getHex(primColor);
+            let hexColorFont = getHex(fontColor);
+
+            resolve({
+                hexColorPrime : hexColorPrime,
+                hexColorFont : hexColorFont
+            });
     
         });
-
-        
+    
       });
     
       return promise;
@@ -202,13 +241,15 @@ function uploadImage(req, res){
     console.log(" HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS")
 
     var imageSrc = req.body.src;
-    var imagePurchaseTags;
+    var imagePurchaseTags, filterOption;
 
     try{
         imagePurchaseTags = JSON.parse(req.body.newTags);
     }catch(err){
         imagePurchaseTags = [];
     }
+
+    filterOption = req.body.filterOption;
      
     var userId = req.auth.userId;
     var resultFilename = req.file.filename;
@@ -216,11 +257,12 @@ function uploadImage(req, res){
 
     let resultFile = path.join(config.baseDir , '/public/i', resultFilename); 
 
-    let colorCode;
+    let colorObj;
+    let hexColorPrime, hexColorFont;
     
     getImageColors(resultFile)
     .then(function(color){
-        colorCode = color;
+        colorObj = color;
         return resultFile
     })
     .then(getImageMetaData)
@@ -232,7 +274,9 @@ function uploadImage(req, res){
                     sessionThumbnailPath : "/i/" + req.file.filename, 
                     width: resolution.width, 
                     height: resolution.height, 
-                    primeColor : colorCode
+                    primeColor : colorObj.hexColorPrime,
+                    primeFont :  colorObj.hexColorFont, 
+                    filterOption : filterOption
                   }).save()
                   .then(resultingSession => {
                     

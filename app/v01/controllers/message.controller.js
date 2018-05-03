@@ -15,8 +15,6 @@ var util = require("../../util/util");
 
 async function notifyVote(sessionId, userId) {
     try {
-        
-        let userDevices = await signalCtrl.getUserDevices(userId);
 
         let senderUserInfo = await userCtrl.getUserInfo(userId);
         let sessionInfo = await sessionConnector.getSessionInfo(sessionId);
@@ -24,51 +22,57 @@ async function notifyVote(sessionId, userId) {
         let receiverId = sessionInfo[0].userId;
         let senderName = senderUserInfo[0].userName;
 
-        let collectionId = sessionInfo[0].collectionId;
-        let collectionTitle = sessionInfo[0].collectionTitle;
+        if (userId != receiverId){
 
-        let translationOptions =  {
-            userName : senderName,
-            collectionTitle : collectionTitle 
-        };
+            let userDevices = await signalCtrl.getUserDevices(receiverId);
 
-        let translations = translateObj.prepareItem(translationOptions, "VOTE_OWNER");
-
-        let msgOption = {
-            senderId : userId, 
-            receivers : [receiverId],
-            messageBody : translations.frontEndKey, 
-            linkUrl : {
-                targetPage : 'ContentPage',
-                params : {
-                    collectionId : collectionId, 
-                    compareSessionIds : sessionId
-                }
-            }, 
-            isUnread : 1, 
-            collectionId : collectionId, 
-            sessionId : sessionId
-        };
-
-        var message = {
-            headings : translations.headings, 
-            contents: translations.content,
-            data: {
-                linkUrl : msgOption.linkUrl,
-                senderName : senderName
-            },
-            include_player_ids: userDevices
-          };
-
-        if (userDevices.length > 0){
-            signalCtrl.sendNotification(message);
+            let collectionId = sessionInfo[0].collectionId;
+            let collectionTitle = sessionInfo[0].collectionTitle;
+    
+            let translationOptions =  {
+                userName : senderName,
+                collectionTitle : collectionTitle 
+            };
+    
+            let translations = translateObj.prepareItem(translationOptions, "VOTE_OWNER");
+    
+            let msgOption = {
+                senderId : userId, 
+                receivers : [receiverId],
+                messageBody : translations.frontEndKey, 
+                linkUrl : {
+                    targetPage : 'ContentPage',
+                    params : {
+                        collectionId : collectionId, 
+                        compareSessionIds : sessionId
+                    }
+                }, 
+                isUnread : 1, 
+                collectionId : collectionId, 
+                sessionId : sessionId
+            };
+    
+            var message = {
+                headings : translations.headings, 
+                contents: translations.content,
+                data: {
+                    linkUrl : msgOption.linkUrl,
+                    senderName : senderName
+                },
+                include_player_ids: userDevices
+              };
+    
+            if (userDevices.length > 0){
+                signalCtrl.sendNotification(message);
+            }
+    
+            let messages = await issueMessage(msgOption);
+    
+            if (messages){
+                //let socketMessages = await socketCtrl.joinActiveSocketsToGroup(groupUsers, newCollection );
+            }
         }
-
-        let messages = await issueMessage(msgOption);
-
-        if (messages){
-            //let socketMessages = await socketCtrl.joinActiveSocketsToGroup(groupUsers, newCollection );
-        }
+       
 
         return true;
        
