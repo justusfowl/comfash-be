@@ -4,6 +4,7 @@ var imgCollectionRoutes = require('./imgcollection.route.js');
 var userRoutes          = require('./user.route.js');
 var authRoutes          = require('./auth.route.js');
 var streamRoutes        = require('./stream.route.js');
+var complianceRoutes        = require('./compliance.route.js');
 
 var router = express.Router();
 
@@ -21,6 +22,8 @@ router.use('/user', [VerifyToken.verifyToken, VerifyToken.successAuth], userRout
 router.use('/stream', [VerifyToken.verifyToken, VerifyToken.successAuth], streamRoutes ); 
 
 router.use('/auth', authRoutes );
+
+router.use('/compliance', [VerifyToken.verifyToken, VerifyToken.successAuth], complianceRoutes );
 
 
 

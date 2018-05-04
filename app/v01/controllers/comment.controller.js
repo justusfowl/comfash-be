@@ -10,7 +10,12 @@ function listCommentForSession (req,res) {
 
     var qryOption = { raw: true, replacements: [sessionId], type: models.sequelize.QueryTypes.SELECT}; 
     
-    let qryStr = 'SELECT c.*,u.userAvatarPath as commentUserAvatarPath, u.userName as commentUserName  FROM cfdata.tblcomments as c  \
+    let qryStr = 
+    'SELECT c.* \
+    ,u.userAvatarPath as commentUserAvatarPath, \
+    u.userName as commentUserName, \
+    u.userId as commentUserId \
+    FROM cfdata.tblcomments as c  \
     LEFT JOIN tblusers as u on c.userId = u.userId \
     where c.sessionId = ?  \
     ORDER BY c.commentCreated DESC';
