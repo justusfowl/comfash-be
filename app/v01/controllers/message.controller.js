@@ -59,7 +59,9 @@ async function notifyVote(sessionId, userId) {
                     linkUrl : msgOption.linkUrl,
                     senderName : senderName
                 },
-                include_player_ids: userDevices
+                include_player_ids: userDevices,
+                ios_badgeType: 'Increase',
+                ios_badgeCount: 1
               };
     
             if (userDevices.length > 0){
@@ -139,7 +141,9 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
                     linkUrl : msgOption.linkUrl,
                     senderName : senderName
                 },
-                include_player_ids: userDevices
+                include_player_ids: userDevices,
+                ios_badgeType: 'Increase',
+                ios_badgeCount: 1
               };
     
             if (userDevices.length > 0){
@@ -218,7 +222,9 @@ async function notifySessionCreate(senderId, sessionId) {
                     linkUrl : msgOption.linkUrl,
                     senderName : senderName
                 },
-                include_player_ids: userDevices
+                include_player_ids: userDevices,
+                ios_badgeType: 'Increase',
+                ios_badgeCount: 1
               };
     
             if (userDevices.length > 0){

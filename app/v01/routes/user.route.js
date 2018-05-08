@@ -35,4 +35,8 @@ router.route('/push/registerDevice')
     
     .post(signalCtrl.registerDevice)
 
+router.route('/follow/:userId')
+
+    .post(userCtrl.toggleFollower)
+
 module.exports =  router; 

@@ -82,6 +82,103 @@ function upsertProfileAvatar (req, res){
 
 }
 
+function toggleFollower (req, res){
+
+    let followerId = req.auth.userId;
+    let followedId = req.params.userId; 
+
+    if (followerId == followedId){
+        res.send(500, {"message" : "You cannot follow yourself"});
+        return;
+    }
+    
+    (async () => {
+        
+        let followerPairExist = await getFollowerPairExist(followerId, followedId);
+
+        if (followerPairExist){
+            //delete pair
+            removeFollowerPair(followerId, followedId).then(result => {
+                res.json(true)
+            }).catch(err => res.send(500, err));;
+        }else{
+            
+            addFollowerPair(followerId, followedId).then(result => {
+                res.json(true)
+            }).catch(err => res.send(500, err));
+            
+        }
+
+    })();
+
+}
+
+
+async function getFollowerPairExist (followerId, followedId) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+            models.tblfollowers.findAll({
+                where : {
+                    "followerId" : followerId,
+                    "followedId" : followedId,
+                  }
+            }).then(function(followerPair) {
+
+                if (followerPair && followerPair.length > 0) {				
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            });
+
+        }
+    );
+    
+}
+
+async function addFollowerPair (followerId, followedId) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+            const followerPair = models.tblfollowers.upsert({
+                followerId: followerId, 
+                followedId : followedId
+            }).then(followerPair => {
+                resolve(true);
+            })
+            .catch(error => {
+                reject(error);
+            })
+
+        }
+    );
+    
+}
+
+async function removeFollowerPair (followerId, followedId) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+            models.tblfollowers.destroy({
+                where: {
+                    followerId: followerId, 
+                    followedId : followedId
+                  }
+            }).then(function(result) {
+                resolve(true);
+            }).catch(error => {
+                reject(error);
+            })
+
+        }
+    );
+    
+}
+
 
 async function getUserInfo (userId) {
     
@@ -110,14 +207,25 @@ async function getUserInfo (userId) {
 
 function getUserProfileBase (req,res) {
 
-    let userId = req.params.userId;
+    let requestUserId = req.auth.userId;
+    let userId = req.params.userId;    
     
     (async () => {
         
         let userInfo = await getUserInfo(userId);
+        let followerPairExist = await getFollowerPairExist(requestUserId, userId)
 
         if (userInfo && userInfo.length > 0){
-            res.json(userInfo[0])
+
+            let targetUserInfo = userInfo[0];
+
+            if (followerPairExist){
+                targetUserInfo["isFollowed"] = true
+            }else{
+                targetUserInfo["isFollowed"] = false
+            }
+
+            res.json(targetUserInfo)
         }else{
             res.json([])
         }
@@ -131,4 +239,4 @@ function getUserProfileBase (req,res) {
 
 
 
-module.exports = { searchUser, listGroups, upsertProfileAvatar, getUserInfo, getUserProfileBase};
+module.exports = { searchUser, listGroups, upsertProfileAvatar, getUserInfo, getUserProfileBase, toggleFollower};

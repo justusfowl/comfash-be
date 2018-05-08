@@ -54,7 +54,7 @@ function listQry (req,res) {
 
     let requestUserId = req.auth.userId;
 
-    whereStr = ' WHERE (g.userIdIsAuthor is not null or c.privacyStatus = 0) AND ';
+    whereStr = ' WHERE (g.userIdIsAuthor is not null or c.privacyStatus = 0 or c.privacyStatus = 3) AND ';
     qryOption = { raw: true, replacements: [requestUserId], type: models.sequelize.QueryTypes.SELECT}; 
 
     if (req.params.collectionId){
@@ -401,7 +401,7 @@ function update(req, res){
 
                     
                         let collectionInfo = await collectionConnector.getCollectionInfo(collectionId);
-                        await messageCtrl.notifyCollectionCreate(userId, collectionInfo.collectionTitle, addedGroupUsers)
+                        await messageCtrl.notifyCollectionCreate(userId, collectionInfo[0].collectionTitle, addedGroupUsers)
                     })();
                     
                     

@@ -10,8 +10,8 @@ let translateObj = {
                 "en" : "FittingStreamUpdate"
             },
         "notifyContent" : {
-            "en" : "{userName} has voted on #{collectionTitle}",
-            "de" : "{userName} hat #{collectionTitle} bewertet"
+            "en" : "@{userName} has voted on #{collectionTitle}",
+            "de" : "@{userName} hat #{collectionTitle} bewertet"
         },
 
     },
@@ -22,8 +22,8 @@ let translateObj = {
                 "de" : "Anfrage"
             },
         "notifyContent" : {
-            "en" : "{userName} has requested feedback on #{collectionTitle}",
-            "de" : "{userName} hat um Unterstützung für #{collectionTitle} gebeten"
+            "en" : "@{userName} has requested feedback on #{collectionTitle}",
+            "de" : "@{userName} hat um Unterstützung für #{collectionTitle} gebeten"
         },
 
     },
@@ -33,8 +33,8 @@ let translateObj = {
                 "en" : "Update"
             },
         "notifyContent" : {
-            "en" : "{userName} has added to #{collectionTitle}",
-            "de" : "{userName} fügt #{collectionTitle} eine Session zu"
+            "en" : "@{userName} has added to #{collectionTitle}",
+            "de" : "@{userName} fügt #{collectionTitle} eine Session zu"
         },
 
     },
