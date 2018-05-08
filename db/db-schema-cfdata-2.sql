@@ -1,6 +1,6 @@
 CREATE TABLE `cfdata`.`tblfollowers` (
-  `followerId` VARCHAR(50) NOT NULL,
-  `followedId` VARCHAR(50) NOT NULL,
+  `followerId` varchar(50) NOT NULL,
+  `followedId` varchar(50) NOT NULL,
   `createdAt` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`followerId`, `followedId`),
   INDEX `followingForeignKey_idx` (`followedId` ASC),
@@ -13,4 +13,5 @@ CREATE TABLE `cfdata`.`tblfollowers` (
     FOREIGN KEY (`followedId`)
     REFERENCES `cfdata`.`tblusers` (`userId`)
     ON DELETE CASCADE
-    ON UPDATE CASCADE);
+    ON UPDATE CASCADE)
+    ENGINE=InnoDB DEFAULT CHARSET=latin1;
