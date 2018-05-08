@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `tblcollections`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tblcollections` (
   `collectionId` int(11) NOT NULL AUTO_INCREMENT,
-  `userId` varchar(45) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   `collectionCreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `collectionTitle` varchar(100) NOT NULL,
   `privacyStatus` int(3) NOT NULL DEFAULT '0',
@@ -49,7 +49,7 @@ CREATE TABLE `tblcomments` (
   `xRatio` decimal(17,17) DEFAULT NULL,
   `yRatio` decimal(17,17) DEFAULT NULL,
   `sessionId` int(11) NOT NULL,
-  `userId` varchar(200) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   `prcSessionItem` int(11) DEFAULT NULL,
   PRIMARY KEY (`commentId`),
   KEY `userId_idx` (`userId`),
@@ -67,7 +67,7 @@ DROP TABLE IF EXISTS `tblcomparehists`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tblcomparehists` (
-  `userId` varchar(100) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   `sessionId` int(11) NOT NULL,
   `addedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `flagActive` varchar(45) DEFAULT '1',
@@ -88,7 +88,7 @@ DROP TABLE IF EXISTS `tblgroupusers`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tblgroupusers` (
   `collectionId` int(11) NOT NULL,
-  `userId` varchar(100) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   `userIdIsAuthor` tinyint(1) NOT NULL DEFAULT '0',
   KEY `memberId_idx` (`userId`),
   KEY `collectionId_idx` (`collectionId`),
@@ -180,7 +180,7 @@ DROP TABLE IF EXISTS `tbluserdevices`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tbluserdevices` (
-  `userId` varchar(200) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   `deviceToken` varchar(100) NOT NULL,
   `lastUpdate` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`deviceToken`),
@@ -197,7 +197,7 @@ DROP TABLE IF EXISTS `tblusers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tblusers` (
-  `userId` varchar(200) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   `userName` varchar(45) DEFAULT NULL,
   `userBirthDate` date DEFAULT NULL,
   `userAvatarPath` varchar(2000) DEFAULT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE `tblvotes` (
   `sessionId` int(11) NOT NULL,
   `voteType` int(11) NOT NULL,
   `voteChanged` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `userId` varchar(200) NOT NULL,
+  `userId` varchar(50) NOT NULL,
   PRIMARY KEY (`sessionId`,`userId`),
   KEY `voteSessionId_idx` (`sessionId`),
   KEY `voteUserId_idx` (`userId`),

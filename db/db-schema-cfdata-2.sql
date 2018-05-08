@@ -1,6 +1,6 @@
 CREATE TABLE `cfdata`.`tblfollowers` (
-  `followerId` VARCHAR(200) NOT NULL,
-  `followedId` VARCHAR(200) NOT NULL,
+  `followerId` VARCHAR(50) NOT NULL,
+  `followedId` VARCHAR(50) NOT NULL,
   `createdAt` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`followerId`, `followedId`),
   INDEX `followingForeignKey_idx` (`followedId` ASC),
