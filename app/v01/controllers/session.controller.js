@@ -20,6 +20,9 @@ const getColors = require('get-image-colors')
 var sizeOf = require('image-size');
 var rgb2hex = require('rgb2hex');
 
+var sharp = require("sharp");
+
+
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 	  cb(null, config.baseDir + '/public/v')
@@ -131,7 +134,8 @@ function create(req, res){
 
 var storageImg = multer.diskStorage({
 	destination: function (req, file, cb) {
-	  cb(null, config.baseDir + '/public/i')
+        //input images are stored in the "o" folder for original files
+	  cb(null, config.baseDir + '/public/o')
 	},
 	filename: function (req, file, cb) {
         var userId = req.auth.userId;
@@ -169,7 +173,8 @@ function getHex(rgbArray){
 
 }
 
-function getImageColors(resultFile){
+function getImageColors(input){
+    let resultFile = input.outputFile;
 
     var promise = new Promise(function(resolve, reject) {
         
@@ -197,10 +202,12 @@ function getImageColors(resultFile){
             let hexColorPrime = getHex(primColor);
             let hexColorFont = getHex(fontColor);
 
-            resolve({
+            input["color"] = {
                 hexColorPrime : hexColorPrime,
                 hexColorFont : hexColorFont
-            });
+            };
+
+            resolve(input);
     
         });
     
@@ -211,7 +218,9 @@ function getImageColors(resultFile){
 }
 
 
-function getImageMetaData(resultFile){
+function getImageMetaData(input){
+
+    let resultFile = input.outputFile;
 
     var getMetaData = new Promise(
         function (resolve, reject) {
@@ -223,7 +232,8 @@ function getImageMetaData(resultFile){
                 width : dimensions.width, 
                 height: dimensions.height
             };
-            resolve(resolution); 
+            input["resolution"] = resolution;
+            resolve(input); 
 
         }
     );
@@ -232,6 +242,71 @@ function getImageMetaData(resultFile){
 
 
 }
+
+
+function getThumbnailImage(origFilePath, origFilename ){
+
+    let resultFile = path.join(config.baseDir , '/public/t', origFilename); 
+    let outputFile = resultFile + '.jpg';
+
+    return new Promise(
+        function (resolve, reject) {
+
+            sharp(origFilePath)
+                .resize(500, 500)
+                .max()
+                .withoutEnlargement()
+                .toFormat('jpeg')
+                .toFile(outputFile, function(err) {
+                    if(err){
+                        console.log(err);
+                        reject(err);
+                    }else{
+                        let output = {
+                            origFilePath: origFilePath,
+                            origFilename :origFilename,
+                            thumbnail : outputFile
+                        };
+                        resolve(output); 
+                    }
+                }); 
+
+        }
+    );
+
+}
+
+function resizeImage(input){
+
+    let origFilePath = input.origFilePath;
+    let origFilename = input.origFilename;
+    
+    let resultFile = path.join(config.baseDir , '/public/i', origFilename); 
+    let outputFile = resultFile + '.jpg';
+
+    return new Promise(
+        function (resolve, reject) {
+
+            sharp(origFilePath)
+                .resize(1200, 1200)
+                .max()
+                .withoutEnlargement()
+                .toFormat('jpeg')
+                .toFile(outputFile, function(err) {
+                    if(err){
+                        console.log(err);
+                        reject(err);
+                    }else{
+                        input["outputFile"] = outputFile;
+                        resolve(input); 
+                    }
+                }); 
+
+        }
+    );
+
+}
+
 
 /**
  * Upload base64 encoded string to create a session from a picture
@@ -255,27 +330,27 @@ function uploadImage(req, res){
     var resultFilename = req.file.filename;
     var fileType = req.file.mimetype;
 
-    let resultFile = path.join(config.baseDir , '/public/i', resultFilename); 
+    let resultFilePath = path.join(config.baseDir , '/public/o', resultFilename); 
+
+    let pureFileName = resultFilename.substr(0,resultFilename.indexOf("."));
 
     let colorObj;
     let hexColorPrime, hexColorFont;
     
-    getImageColors(resultFile)
-    .then(function(color){
-        colorObj = color;
-        return resultFile
-    })
+    getThumbnailImage(resultFilePath, pureFileName)
+    .then(resizeImage)
+    .then(getImageColors)
     .then(getImageMetaData)
-    .then(function (resolution) {
+    .then(function (output) {
                 const session = models.tblsessions.build({
                     collectionId : req.params.collectionId, 
-                    sessionItemPath : "/i/" + req.file.filename, 
+                    sessionItemPath : "/i/" + pureFileName + ".jpg", 
                     sessionItemType : fileType, 
-                    sessionThumbnailPath : "/i/" + req.file.filename, 
-                    width: resolution.width, 
-                    height: resolution.height, 
-                    primeColor : colorObj.hexColorPrime,
-                    primeFont :  colorObj.hexColorFont, 
+                    sessionThumbnailPath : "/t/" + pureFileName + ".jpg", 
+                    width: output.resolution.width, 
+                    height: output.resolution.height, 
+                    primeColor : output.color.hexColorPrime,
+                    primeFont :  output.color.hexColorFont, 
                     filterOption : filterOption
                   }).save()
                   .then(resultingSession => {
@@ -311,7 +386,6 @@ function uploadImage(req, res){
             });
     
 }
-
 
 
 function deleteSession(req, res){
