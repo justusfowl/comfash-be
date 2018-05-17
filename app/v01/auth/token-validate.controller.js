@@ -8,10 +8,10 @@ var verifyToken = jwt({
       cache: true,
       rateLimit: true,
       jwksRequestsPerMinute: 5,
-      jwksUri: "https://comfash.eu.auth0.com/.well-known/jwks.json"
+      jwksUri: config.auth.jwksUri
   }),
-  aud: 'https://comfash.local:9999/api/v01',
-  iss: "https://comfash.eu.auth0.com/",
+  aud: config.auth.auth0_audience, //'https://comfash.local:9999/api/v01',
+  iss: config.auth.iss,
   algorithms: ['RS256']
 });
 

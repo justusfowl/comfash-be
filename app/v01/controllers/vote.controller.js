@@ -12,12 +12,17 @@ function upsertVote(req, res){
         userId: userId
     }).then(vote => {
 
-        console.log("vote saved"); 
-        res.json(vote);
+        console.log("vote saved");
 
         (async () => {
             // send notification to owner of the session
+
+            let voteStats = await getVoteStats(sessionId);
+             
+            res.json(voteStats);
+
             await messageCtrl.notifyVote(sessionId, userId);
+
         })();
 
         return null;
@@ -48,6 +53,34 @@ function deleteVote(req, res){
             
         res.send("comment not found");
     });
+}
+
+async function getVoteStats (sessionId) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+            var qryOption = { raw: true, replacements: [sessionId], type: models.sequelize.QueryTypes.SELECT}; 
+
+            let qryStr = 'SELECT avg(v.voteType)as voteAvg, sessionId  FROM cfdata.tblvotes as v \
+            where v.sessionId = ?;';
+        
+            models.sequelize.query(
+                qryStr,
+                qryOption
+            ).then(voteStats => {
+
+                if (voteStats.length > 0 && voteStats){
+                   
+                    resolve(voteStats[0]);
+                }else{
+                    resolve(null);
+                }
+
+            })
+        }
+    );
+    
 }
 
 module.exports =   { upsertVote, deleteVote };

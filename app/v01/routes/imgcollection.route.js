@@ -9,6 +9,8 @@ var voteCtrl = require ("../controllers/vote.controller");
 var comparehistCtrl = require("../controllers/comparehist.controller"); 
 var tagCtrl = require("../controllers/tag.controller");
 
+
+
 var router = express.Router(); 
 
 router.route('/')
@@ -99,5 +101,6 @@ router.route('/:collectionId/session/:sessionId/tag')
 router.route('/:collectionId/session/:sessionId/tag/:tagId')
 
     .delete(tagCtrl.deleteTag);
+
 
 module.exports =  router; 

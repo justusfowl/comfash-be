@@ -12,6 +12,10 @@ const mysqlDb = require('./app/config/db');
 const cors = require('cors');
 
 var express    = require('express');
+
+var subdomain = require('express-subdomain');
+
+
 var app        = express();
 var bodyParser = require('body-parser');
 
@@ -25,6 +29,7 @@ var options = {
 	cert: fs.readFileSync('comfash.local.crt'),
 	ca: fs.readFileSync('rootCA.pem')
   };
+
 
 config.baseDir = __dirname;
 config.publicDir = __dirname + "/public";
@@ -56,7 +61,7 @@ io.use(socketioJwt.authorize({
 io.on('connection', socketCtrl.handleConnect);
 
 app.use(bodyParser.urlencoded({ extended: true, limit: '200mb' }));
-app.use(bodyParser.json());
+app.use(bodyParser.json( {limit: '50mb', extended: true}));
 
 app.use(cors());
 
@@ -71,11 +76,21 @@ app.use(express.static('web/dist'));
 
 app.use('/api/v' + config.APIVersion, routes);
 
+//app.use(subdomain('api', routes)); //using the same router
+
 
 // START THE SERVER
 // =============================================================================
 server.listen(config.port);
 
 console.log('ComfashBE application running on port: ' + config.port);
+
+// Redirect from http port 80 to https
+var http = require('http');
+http.createServer(function (req, res) {
+    res.writeHead(301, { "Location": "https://" + req.headers['host'] + ":" + config.port + req.url });
+    res.end();
+}).listen(80);
+
 
 config.logger.info("comfash started")

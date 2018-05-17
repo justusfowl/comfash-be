@@ -5,6 +5,8 @@ var userRoutes          = require('./user.route.js');
 var authRoutes          = require('./auth.route.js');
 var streamRoutes        = require('./stream.route.js');
 var complianceRoutes        = require('./compliance.route.js');
+var auxRoutes        = require('./auxi.route.js');
+var devRoutes = require('./dev.route.js');
 
 var router = express.Router();
 
@@ -23,7 +25,11 @@ router.use('/stream', [VerifyToken.verifyToken, VerifyToken.successAuth], stream
 
 router.use('/auth', authRoutes );
 
+router.use('/aux', [VerifyToken.verifyToken, VerifyToken.successAuth], auxRoutes)
+
 router.use('/compliance', [VerifyToken.verifyToken, VerifyToken.successAuth], complianceRoutes );
+
+router.use('/feedback', [VerifyToken.verifyToken, VerifyToken.successAuth], devRoutes)
 
 
 

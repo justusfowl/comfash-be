@@ -36,8 +36,8 @@ async function createTags(sessionId, tags) {
                     tagImage : tag.tagImage,
                     tagSeller : tag.tagSeller,
                     tagBrand : tag.tagBrand, 
-                    xRatio: tag.coords.xRatio, 
-                    yRatio: tag.coords.yRatio
+                    xRatio: tag.xRatio, 
+                    yRatio: tag.yRatio
                 }
 
                 purchaseTags.push(newTag);
