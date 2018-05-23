@@ -35,6 +35,8 @@ mkdir public/a
 mkdir public/img
 mkdir public/t
 mkdir public/v
+mkdir public/o
+mkdir feedback
 
 // upload ffmpeg to server 
 sudo apt-get install ffmpeg 

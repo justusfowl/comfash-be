@@ -36,8 +36,7 @@ var resolveUrl = function(request, response) {
     });
     
     req.on('error', function(e) {
-      console.log("ERROR:");
-      console.log(e);
+      config.logger.error(e);
       res.send(500, e);
 
     });

@@ -1,6 +1,7 @@
 var models  = require('../models');
 
 var _ = require('lodash');
+var config = require('../../config/config'); 
 
 
 function getQryString(key, flagIsUserId = false){
@@ -20,6 +21,7 @@ function getQryString(key, flagIsUserId = false){
             itemCreator.userName as itemCreator,  \
             itemCreator.userAvatarPath as itemCreatorAvatarPath,  \
             s.sessionItemPath,  \
+            s.sessionItemType,  \
             s.sessionThumbnailPath, \
             s.sessionCreated, \
             c.collectionTitle,  \
@@ -68,6 +70,7 @@ function getQryString(key, flagIsUserId = false){
             itemCreator.userAvatarPath as itemCreatorAvatarPath,  \
             s.sessionItemPath,  \
             s.sessionThumbnailPath, \
+            s.sessionItemType,  \
             s.sessionCreated, \
             s.primeColor, \
             c.collectionTitle,  \
@@ -182,6 +185,7 @@ async function getTrendingItems (options, target) {
 
             }).catch(err => {
                 reject(err);
+                config.logger.error(err);
             })
         }
     );

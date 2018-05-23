@@ -1,5 +1,6 @@
 var models  = require('../models');
 var messageCtrl = require('../controllers/message.controller');
+const config = require('../../config/config');
 
 function upsertVote(req, res){
 
@@ -30,7 +31,8 @@ function upsertVote(req, res){
       })
       .catch(error => {
         // Ooops, do some error-handling
-        console.log(error); 
+        console.log(error);
+        config.logger.error(error);
         res.send(500, error);
       })
 
@@ -50,8 +52,8 @@ function deleteVote(req, res){
             res.send(404, "comment not found");
         }
         }, function(error) {
-            
-        res.send("comment not found");
+            config.logger.error(error);
+            res.send("comment not found");
     });
 }
 
@@ -77,6 +79,8 @@ async function getVoteStats (sessionId) {
                     resolve(null);
                 }
 
+            }).catch(error => {
+                config.logger.error(error);
             })
         }
     );

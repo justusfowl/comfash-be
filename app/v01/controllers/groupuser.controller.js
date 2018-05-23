@@ -5,6 +5,8 @@ var _ = require("lodash");
 var messageCtrl = require('../controllers/message.controller');
 var collectionConnector = require('../connectors/collection.connector');
 
+var config = require("../../config/config");
+
 function getWhereInQryString(reqGroupUsers, isInFlag){
 
     let whereStr = "";
@@ -52,6 +54,8 @@ async function getDeltaGroupUsers (collectionId, reqGroupUsers) {
 
                 resolve(deltaGroupUsers);
 
+            }).catch(error => {
+                config.logger.error(error);
             })
         }
     );
@@ -81,6 +85,8 @@ async function deleteNegDeltaGroupUsers (collectionId, reqGroupUsers) {
 
                 resolve(deltaGroupUsers);
 
+            }).catch(error => {
+                config.logger.error(error);
             })
         }
     );
@@ -159,6 +165,7 @@ async function bulkInsertGroupUsers (ownerUserId, collectionId, addUsersSharedWi
                     .catch(function(error){
                         console.log(error);
                         res.send(500, error);
+                        config.logger.error(error);
                     })
             }else{
                 reject(groupUsers)

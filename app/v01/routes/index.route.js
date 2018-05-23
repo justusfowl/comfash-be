@@ -7,6 +7,7 @@ var streamRoutes        = require('./stream.route.js');
 var complianceRoutes        = require('./compliance.route.js');
 var auxRoutes        = require('./auxi.route.js');
 var devRoutes = require('./dev.route.js');
+var searchRoutes = require('./search.route.js');
 
 var router = express.Router();
 
@@ -29,8 +30,8 @@ router.use('/aux', [VerifyToken.verifyToken, VerifyToken.successAuth], auxRoutes
 
 router.use('/compliance', [VerifyToken.verifyToken, VerifyToken.successAuth], complianceRoutes );
 
-router.use('/feedback', [VerifyToken.verifyToken, VerifyToken.successAuth], devRoutes)
+router.use('/feedback', [VerifyToken.verifyToken, VerifyToken.successAuth], devRoutes);
 
-
+router.use('/search', [VerifyToken.verifyToken, VerifyToken.successAuth], searchRoutes);
 
 module.exports = router; 

@@ -37,8 +37,8 @@ function searchUser (req,res) {
             res.send(401, "User not found");
         }
         }, function(error) {
-            
-        res.send("User not found");
+            config.logger.error(error);
+            res.send("User not found");
     });
 }
 
@@ -76,7 +76,8 @@ function upsertProfileAvatar (req, res){
         })
     .catch(error => {
         // Ooops, do some error-handling
-        console.log(error); 
+        console.log(error);
+        config.logger.error(error);
         res.send(500, error);
     })
 
@@ -100,12 +101,18 @@ function toggleFollower (req, res){
             //delete pair
             removeFollowerPair(followerId, followedId).then(result => {
                 res.json(true)
-            }).catch(err => res.send(500, err));;
+            }).catch(err => {
+                config.logger.error(err);
+                res.send(500, err);
+            });
         }else{
             
             addFollowerPair(followerId, followedId).then(result => {
                 res.json(true)
-            }).catch(err => res.send(500, err));
+            }).catch(err => {
+                config.logger.error(err);
+                res.send(500, err);
+            });
             
         }
 
@@ -131,6 +138,8 @@ async function getFollowerPairExist (followerId, followedId) {
                 } else {
                     resolve(false);
                 }
+            }).catch(error => {
+                config.logger.error(error);
             });
 
         }
@@ -150,6 +159,7 @@ async function addFollowerPair (followerId, followedId) {
                 resolve(true);
             })
             .catch(error => {
+                config.logger.error(error);
                 reject(error);
             })
 
@@ -171,6 +181,7 @@ async function removeFollowerPair (followerId, followedId) {
             }).then(function(result) {
                 resolve(true);
             }).catch(error => {
+                config.logger.error(error);
                 reject(error);
             })
 
@@ -199,6 +210,8 @@ async function getUserInfo (userId) {
 
                 resolve(userInfo);
 
+            }).catch(error => {
+                config.logger.error(error);
             })
         }
     );

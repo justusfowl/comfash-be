@@ -5,6 +5,7 @@ var config  = require('../../config/config');
 var hash = require ('string-hash');
 var fs = require('fs');
 
+var config = require("../../config/config");
 
 function submitFeedback(req, res){
 
@@ -40,6 +41,7 @@ function submitFeedback(req, res){
                 // Ooops, do some error-handling
                 console.log(error); 
                 res.send(500, error);
+                config.logger.error(error);
               })
     
         });
@@ -58,6 +60,7 @@ function submitFeedback(req, res){
             // Ooops, do some error-handling
             console.log(error); 
             res.send(500, error);
+            config.logger.error(error);
           })
     }
     

@@ -9,6 +9,8 @@ var _ = require("lodash");
 
 var collectionConnector = require('../connectors/collection.connector');
 
+var config = require("../../config/config");
+
 
 function addToArray (obj, key, array){
 
@@ -39,6 +41,8 @@ function listMyCollections (req,res) {
 
         res.json(myCollections);
 
+    }).catch(error => {
+        config.logger.error(error);
     })
 
 }
@@ -46,6 +50,7 @@ function listMyCollections (req,res) {
 
 
 function listQry (req,res) {
+
 
     let userId, whereStr, qryOption; 
     let isSessionRequested = false;
@@ -299,9 +304,11 @@ function listQry (req,res) {
 
         }else{
             res.json(result);
-            console.log(result)
+            console.log(result);
         }
 
+    }).catch(error => {
+        config.logger.error(error);
     })
 }
 
@@ -319,7 +326,8 @@ function listDetail (req,res) {
             c.*, \
             g.userId as groupUserId, \
             g.userIdIsAuthor, \
-            u.userName as groupUserName \
+            u.userName as groupUserName, \
+            u.userAvatarPath as groupUserAvatarPath \
             FROM cfdata.tblgroupusers as g \
             inner join cfdata.tblcollections as c on g.collectionId = c.collectionId \
             inner join cfdata.tblusers as u on g.userId = u.userId \
@@ -347,7 +355,8 @@ function listDetail (req,res) {
                 }else{
                     sharedWithUsers.push({
                         "userId" : groupUser.groupUserId, 
-                        "userName" : groupUser.groupUserName
+                        "userName" : groupUser.groupUserName,
+                        "userAvatarPath" : groupUser.groupUserAvatarPath
                     })
                 }
     
@@ -361,6 +370,8 @@ function listDetail (req,res) {
             console.log([])
         }
        
+    }).catch(error => {
+        config.logger.error(error);
     })
 }
 
@@ -410,7 +421,8 @@ function update(req, res){
                 })
                 .catch(error => {
                     // Ooops, do some error-handling
-                    console.log(error); 
+                    console.log(error);
+                    config.logger.error(error);
                     res.send(500, error);
                 })
 
@@ -465,6 +477,7 @@ function create(req, res){
       .catch(error => {
         // Ooops, do some error-handling
         console.log(error); 
+        config.logger.error(error);
         res.send(500, error);
       })
 
@@ -488,6 +501,8 @@ function deleteItem(req, res){
         }, function(error) {
             
         res.send("User not found");
+    }).catch(error => {
+        config.logger.error(error);  
     });
 
 }

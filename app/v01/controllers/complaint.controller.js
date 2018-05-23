@@ -2,6 +2,8 @@ var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
+var config = require("../../config/config");
+
 function create(req, res){
 
     let userId = req.auth.userId; 
@@ -19,6 +21,7 @@ function create(req, res){
       })
       .catch(error => {
         res.send(500, error);
+        config.logger.error(error);
       })
 
 }

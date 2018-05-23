@@ -1,5 +1,8 @@
 var models  = require('../models');
 
+var config = require("../../config/config");
+
+
 function listCompareHist (req,res) {
 
     let userId = req.auth.userId; 
@@ -20,7 +23,12 @@ function listCompareHist (req,res) {
         console.log("comparehist saved"); 
         res.json(compareHist);
 
-    })
+    }).catch(error => {
+        // Ooops, do some error-handling
+        console.log(error); 
+        res.send(500, error);
+        config.logger.error(error);
+      });
 
 }
 
@@ -39,11 +47,11 @@ function upsertCompareHist(req, res){
         console.log("comparehist saved"); 
         res.json(comparehist);
         
-      })
-      .catch(error => {
+      }).catch(error => {
         // Ooops, do some error-handling
         console.log(error); 
         res.send(500, error);
+        config.logger.error(error);
       })
 
 }
@@ -68,7 +76,12 @@ function deleteComparehist(req, res){
         }, function(error) {
             
         res.send("comparehist not found");
-    });
+    }).catch(error => {
+        // Ooops, do some error-handling
+        console.log(error); 
+        res.send(500, error);
+        config.logger.error(error);
+      })
 }
 
 module.exports =   { listCompareHist, upsertCompareHist, deleteComparehist };

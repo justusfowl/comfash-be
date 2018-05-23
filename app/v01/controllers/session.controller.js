@@ -49,6 +49,8 @@ function list (req,res) {
         }, function(error) {
             
         res.send("Sessions not found");
+    }).catch(error => {
+        config.logger.error(error);
     });
 
 }
@@ -125,6 +127,7 @@ function create(req, res){
             .catch(function (error) {
                 console.log(error); 
                 res.send(500, error);
+                config.logger.error(error);
             });
     };
 
@@ -377,12 +380,14 @@ function uploadImage(req, res){
                     // Ooops, do some error-handling
                     console.log(error); 
                     res.send(500, error);
+                    config.logger.error(error);
                   })
 
             })
             .catch(function (error) {
                 console.log(error); 
                 res.send(500, error);
+                config.logger.error(error);
             });
     
 }
@@ -420,15 +425,15 @@ function deleteSession(req, res){
                 }
 
                 }, function(error) {
-                    
-                res.send("comment not found");
+                    config.logger.error(error);
+                    res.send("comment not found");
             });
 
         } else {
             res.send(401, "Sessions not found");
         }
         }, function(error) {
-            
+        config.logger.error(error);
         res.send("Sessions not found");
     });
 

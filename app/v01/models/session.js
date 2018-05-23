@@ -39,11 +39,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     primeColor: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     primeFont: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     filterOption: {
         type: DataTypes.TEXT,

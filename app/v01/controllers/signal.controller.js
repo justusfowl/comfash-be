@@ -59,8 +59,8 @@ async function getUserDevices (userId) {
                     reject("userDevices not defined")
                 }
                 }, function(error) {
-                    
-                reject(error)
+                    config.logger.error(error);
+                    reject(error)
             });
             
         }
@@ -85,6 +85,7 @@ function registerDevice(req, res){
         // Ooops, do some error-handling
         console.log(error); 
         res.send(500, error);
+        config.logger.error(error);
     })
 
 }

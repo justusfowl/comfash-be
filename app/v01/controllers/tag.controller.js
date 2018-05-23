@@ -1,4 +1,5 @@
 var models  = require('../models');
+var config = require('../../config/config'); 
 
 
 function upsertTag(req, res){
@@ -17,6 +18,7 @@ function upsertTag(req, res){
         // Ooops, do some error-handling
         console.log(error); 
         res.send(500, error);
+        config.logger.error(error);
       })
 
 }
@@ -51,6 +53,7 @@ async function createTags(sessionId, tags) {
               })
               .catch(error => {
                 console.log(error);
+                config.logger.error(error);
                 reject (false)
               })
 
@@ -75,8 +78,8 @@ function deleteTag(req, res){
             res.send(404, "tag not found");
         }
         }, function(error) {
-            
-        res.send("tag not found");
+            config.logger.error(error);
+            res.send("tag not found");
     });
 }
 

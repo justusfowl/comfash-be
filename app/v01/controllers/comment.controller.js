@@ -2,6 +2,8 @@ var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
+var config = require("../../config/config");
+
 
 function listCommentForSession (req,res) {
 
@@ -28,6 +30,8 @@ function listCommentForSession (req,res) {
         console.log("comparehist saved"); 
         res.json(compareHist);
 
+    }).catch(error => {
+        config.logger.error(error);
     })
 
 }
@@ -50,6 +54,7 @@ function create(req, res){
         // Ooops, do some error-handling
         console.log(error); 
         res.send(500, error);
+        config.logger.error(error);
       })
 
 }
@@ -69,7 +74,12 @@ function deleteItem(req, res){
         }, function(error) {
             
         res.send("comment not found");
-    });
+    }).catch(error => {
+        // Ooops, do some error-handling
+        console.log(error); 
+        res.send(500, error);
+        config.logger.error(error);
+      });
 }
 
 module.exports =   { listCommentForSession, create, deleteItem };

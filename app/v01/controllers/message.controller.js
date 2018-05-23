@@ -2,16 +2,16 @@ var models  = require('../models');
 var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 var _ = require('lodash');
-
 var socketCtrl = require('../socket/socket.controller');
 var userCtrl = require('./user.controller');
 var sessionConnector = require('../connectors/session.connector');
-
 var signalCtrl = require('./signal.controller');
-
 var translateObj = require ('../../config/translations');
-
 var util = require("../../util/util");
+
+var config = require("../../config/config");
+
+
 
 async function notifyVote(sessionId, userId) {
     try {
@@ -81,6 +81,7 @@ async function notifyVote(sessionId, userId) {
     }
     catch (error) {
         console.log(error);
+        config.logger.error(error);
     }
 }
 
@@ -156,7 +157,7 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
        
     }
     catch (error) {
-        console.log(error);
+        config.logger.error(error);
     }
 }
 
@@ -238,6 +239,7 @@ async function notifySessionCreate(senderId, sessionId) {
     }
     catch (error) {
         console.log(error);
+        config.logger.error(error);
     }
 }
 
@@ -317,7 +319,9 @@ async function issueMessage(msgOption) {
             })
             .catch(function(error){
                 console.log(error);
-                reject (false)
+                config.logger.error(error);
+                reject (false);
+                
             })
 
         
@@ -343,6 +347,7 @@ function list (req,res) {
         m.messageCreated, \
         m.isUnread, \
         s.userName as senderName,\
+        s.userId as senderUserId,\
         s.userAvatarPath as senderAvatarPath,\
         r.userName as receiverName,\
         sess.sessionThumbnailPath, \
@@ -363,6 +368,8 @@ function list (req,res) {
 
         res.json(messages);
         console.log(messages)
+    }).catch(error => {
+        config.logger.error(error);
     })
 
 }
@@ -373,21 +380,25 @@ function getNoUnread(req, res){
 
     models.tblmessages.count({ where: {'receiverId': userId, "isUnread" : 1} }).then(c => {
         res.json({"isUnreadCnt" : c});
+      }).catch(error => {
+        config.logger.error(error);
       })
 
 }
 
 function updateMessageReadStatus(req, res){
 
-    console.log("HIER NOCH AUTHORISIERUNG AUF EIGENE MESSAGES EINSCHRÄNKEN");
-
     let messageId = req.params.messageId;
     let messageIsRead = req.body.isUnread;
+    let receiverId = req.auth.userId;
 
     models.tblmessages.update({
         isUnread: messageIsRead
       }, {
-        where: { messageId: messageId }
+        where: { 
+            messageId: messageId, 
+            receiverId : receiverId
+             }
       }).then(function(message) {
         if (message) {				
             res.json(message);
@@ -395,8 +406,9 @@ function updateMessageReadStatus(req, res){
             res.send(401, "message not found");
         }
         }, function(error) {
-            
         res.send("message not found");
+    }).catch(error => {
+        config.logger.error(error);  
     });
 
 }

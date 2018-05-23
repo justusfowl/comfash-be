@@ -2,7 +2,7 @@
 var winston = require('winston');
 var morgan = require('morgan');
 
-const { format } = require('winston');
+const { format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
 
 var fs = require('fs')
@@ -17,40 +17,99 @@ const myFormat = printf(info => {
   var winston = require('winston');
   require('winston-daily-rotate-file');
 
-  var transportError = new (winston.transports.DailyRotateFile)({
-    filename: 'logs/comfash-be-error-%DATE%.log',
-    level : 'error',
-    datePattern: 'YYYY-MM-DD-HH',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '14d'
-  });
 
-  var transporCombined = new (winston.transports.DailyRotateFile)({
-    filename: 'logs/comfash-be-combined-%DATE%.log',
-    datePattern: 'YYYY-MM-DD-HH',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '14d'
-  });
+  if (process.env.NODE_ENV !== 'production') {
+   
+    var transportError = new (winston.transports.DailyRotateFile)({
+      filename: 'logs/comfash-be-error-%DATE%.log',
+      level : 'error',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d'
+    });
+
+    var transporCombined = new (winston.transports.DailyRotateFile)({
+      filename: 'logs/comfash-be-combined-%DATE%.log',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d'
+    });
+
+    var logger = winston.createLogger({
+      level: 'info',
+      format: combine(
+          label({ label: 'comfash-be' }),
+          timestamp(),
+          myFormat
+      ),
+      transports: [
+        new winston.transports.Console({
+            format: winston.format.simple()
+            }),
+          transportError, 
+          transporCombined
+      ],
+      exitOnError: false
+    });
+
+  }else{
+
+    var transportError = new (winston.transports.DailyRotateFile)({
+      filename: 'logs/comfash-be-error-%DATE%.log',
+      level : 'error',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d',
+      handleExceptions: true,
+      humanReadableUnhandledException: true
+    });
+
+    var transporCombined = new (winston.transports.DailyRotateFile)({
+      filename: 'logs/comfash-be-combined-%DATE%.log',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d'
+    });
+
+     
+    var logger = winston.createLogger({
+      level: 'info',
+      format: combine(
+          label({ label: 'comfash-be' }),
+          timestamp(),
+          myFormat
+      ),
+      transports: [
+      new winston.transports.Console({
+          format: winston.format.simple()
+          }),
+        transportError, 
+        transporCombined
+      ],
+      exceptionHandlers: [
+        new winston.transports.File({ 
+          filename: 'logs/exceptions.log', 
+          silent: false,
+          colorize: true, 
+          timestamp: true,
+          json: false })
+      ],
+      exitOnError: false
+    });
 
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: combine(
-        label({ label: 'comfash-be' }),
-        timestamp(),
-        myFormat
-    ),
-    transports: [
-    new winston.transports.Console({
-        format: winston.format.simple()
-        }),
-      transportError, 
-      transporCombined
+    
 
-    ]
-  });
+
+  }
+
+ 
+
+
 
   var sqlTransportError = new (winston.transports.DailyRotateFile)({
     filename: 'logs/sql/sql-comfash-be-error-%DATE%.log',
@@ -87,11 +146,11 @@ const sqlLogger = winston.createLogger({
   });
   
   
-  if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-      format: winston.format.simple()
-    }));
-  }
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple()
+  }));
+}
 
 logger.info('Init logger');
 
