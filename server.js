@@ -77,6 +77,11 @@ app.use(express.static('web/dist'));
 
 app.use('/api/v' + config.APIVersion, routes);
 
+// Catch all other routes and return the index file to make angular handle the respective frontend request
+app.get('*', (req, res) => {
+	res.sendFile(path.join(__dirname, 'web/dist/index.html'));
+});
+
 //app.use(subdomain('api', routes)); //using the same router
 
 

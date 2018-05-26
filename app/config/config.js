@@ -73,6 +73,13 @@ const config = {
     }, 
     linkPreview : {
       "api_key" : process.env.LINK_PREVIEW_KEY
+    }, 
+    mq : {
+      mqServer: process.env.MQ_SERVER,
+      mqUser: process.env.MQ_USER,
+      mqPassword: process.env.MQ_PASSWORD,
+      mqPort: process.env.MQ_Port,
+
     }
   };
   

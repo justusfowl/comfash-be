@@ -8,6 +8,7 @@ var complianceRoutes        = require('./compliance.route.js');
 var auxRoutes        = require('./auxi.route.js');
 var devRoutes = require('./dev.route.js');
 var searchRoutes = require('./search.route.js');
+var predictRoutes = require('./predict.route.js');
 
 var router = express.Router();
 
@@ -33,5 +34,7 @@ router.use('/compliance', [VerifyToken.verifyToken, VerifyToken.successAuth], co
 router.use('/feedback', [VerifyToken.verifyToken, VerifyToken.successAuth], devRoutes);
 
 router.use('/search', [VerifyToken.verifyToken, VerifyToken.successAuth], searchRoutes);
+
+router.use('/test', predictRoutes);
 
 module.exports = router; 

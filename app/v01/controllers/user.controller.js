@@ -218,6 +218,35 @@ async function getUserInfo (userId) {
     
 }
 
+
+async function getUserStats (userId) {
+    
+    return new Promise(
+        (resolve, reject) => {
+
+
+            var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
+
+            let qryStr = 'SELECT count(*) as followerCnt FROM \
+            cfdata.tblfollowers as f\
+            where f.followedId = ?;';
+        
+            models.sequelize.query(
+                qryStr,
+                qryOption
+            ).then(userStats => {
+
+                resolve(userStats[0]);
+                
+
+            }).catch(error => {
+                config.logger.error(error);
+            })
+        }
+    );
+    
+}
+
 function getUserProfileBase (req,res) {
 
     let requestUserId = req.auth.userId;
@@ -226,12 +255,15 @@ function getUserProfileBase (req,res) {
     (async () => {
         
         let userInfo = await getUserInfo(userId);
+        let userStats = await getUserStats(userId);
         let followerPairExist = await getFollowerPairExist(requestUserId, userId)
 
         if (userInfo && userInfo.length > 0){
 
             let targetUserInfo = userInfo[0];
-
+            
+            targetUserInfo["followerCnt"] = userStats.followerCnt;
+            
             if (followerPairExist){
                 targetUserInfo["isFollowed"] = true
             }else{

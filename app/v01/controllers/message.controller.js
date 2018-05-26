@@ -11,8 +11,6 @@ var util = require("../../util/util");
 
 var config = require("../../config/config");
 
-
-
 async function notifyVote(sessionId, userId) {
     try {
 

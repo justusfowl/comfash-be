@@ -46,6 +46,7 @@ Gruntfile.js
 
 .env
 
+comfash-d6e07d721cb2.json
 *.crt
 *.key
 *.pem

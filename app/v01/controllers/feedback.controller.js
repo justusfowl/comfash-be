@@ -6,6 +6,7 @@ var hash = require ('string-hash');
 var fs = require('fs');
 
 var config = require("../../config/config");
+var signalCtrl = require('./signal.controller');
 
 function submitFeedback(req, res){
 
@@ -54,6 +55,16 @@ function submitFeedback(req, res){
           .then(resultFeedback => {
             
             res.json(resultFeedback);
+
+            (async () => {
+              // send notification to owner of the session
+  
+              await notifyFeedback();
+  
+          })();
+  
+          return null;
+          
     
           })
           .catch(error => {
@@ -63,9 +74,44 @@ function submitFeedback(req, res){
             config.logger.error(error);
           })
     }
-    
-
-
+  
 }
+
+
+
+async function notifyFeedback() {
+
+  try {
+
+      // notify uli
+      let userDevices = await signalCtrl.getUserDevices("a88dff2fc6698f332c8bff88c0e806d4");
+
+      var message = {
+          headings : {
+              "en" : "Feedback"
+          }, 
+          contents: {
+            "en" : "A user has given feedback on comfash"
+        },
+          include_player_ids: userDevices,
+          ios_badgeType: 'Increase',
+          ios_badgeCount: 1
+        };
+
+      if (userDevices.length > 0){
+          signalCtrl.sendNotification(message);
+      }
+     
+
+      return true;
+     
+  }
+  catch (error) {
+      console.log(error);
+      config.logger.error(error);
+  }
+}
+
+
 
 module.exports =   { submitFeedback };
