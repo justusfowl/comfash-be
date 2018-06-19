@@ -10,4 +10,13 @@ router.route('/')
 
     .get(searchCtrl.searchUser)
 
+router.route('/outfits')
+
+    .get(searchCtrl.searchOutfits)
+
+router.route('/outfits/:outfitId')
+
+    .get(searchCtrl.outfitMoreDetails)
+    
+
 module.exports =  router; 

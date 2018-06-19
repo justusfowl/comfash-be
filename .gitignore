@@ -41,6 +41,7 @@ Gruntfile.js
 /public/t/*
 /public/v/*
 /public/o/*
+/public/p/*
 
 /web/*
 

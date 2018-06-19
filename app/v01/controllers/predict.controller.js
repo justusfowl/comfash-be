@@ -3,11 +3,13 @@
 var config  = require('../../config/config');
 var amqp = require('amqplib/callback_api');
 
+
 // Imports the Google Cloud client library
 const vision = require('@google-cloud/vision');
 
 // Creates a client
 const client = new vision.ImageAnnotatorClient();
+
 
 function predict_google (req, res) {
 
@@ -34,9 +36,15 @@ function predict_google (req, res) {
 // test function to issue to message broker for image recognition
 
 function predict(req, res) {
-  var input = [
-    10, 20, 40, 100
-  ]
+
+  var input = {
+      "sessionThumbnailPath" : req.query.fileName, 
+      "sessionId" : req.query.sessionId, 
+      "origPath" : req.query.origPath, 
+      "origEntity" : req.query.origEntity, 
+      "sessionOwner" : req.query.sessionOwner
+  }
+
   amqp.connect('amqp://' + config.mq.mqUser + ':' + config.mq.mqPassword + '@' + config.mq.mqServer + ':' + config.mq.mqPort, function (err, conn) {
 
       if (err){
@@ -52,13 +60,25 @@ function predict(req, res) {
       var results = 'results';
       ch.assertQueue(results, { durable: false });
       ch.sendToQueue(simulations, new Buffer(JSON.stringify(input)));
+
+      res.json({"message" : "ok"});
+      /*
       ch.consume(results, function (msg) {
-        res.send(msg.content.toString())
+          try{
+            res.send(msg.content.toString())
+          }catch(err){
+              console.log(err);
+          }
+        
       }, { noAck: true });
+      */
     });
     setTimeout(function () { conn.close(); }, 500); 
     });
 }
+
+
+
 
 
 module.exports =   { predict };

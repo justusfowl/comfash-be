@@ -43,6 +43,7 @@ const config = {
       expiresIn: process.env.JWT_EXPIRES_IN
     },
     APIVersion: '01',
+
     mysql: {
       username: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASS || "",
@@ -50,6 +51,19 @@ const config = {
       host: process.env.MYSQL_HOST,
       dialect: 'mysql',
       logging: logger.sqlLogger.info.bind(logger.sqlLogger)
+    },
+
+    mongodb: {
+      username: process.env.MONGO_USER,
+      password: process.env.MONGO_PASS,
+      database: process.env.MONGO_DB,
+      host: process.env.MONGO_HOST
+    },
+
+    solr: {
+      server: process.env.SOLR_SERVER,
+      port: process.env.SOLR_PORT,
+      core: process.env.SOLR_CORE
     },
 
     signal : {

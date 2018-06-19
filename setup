@@ -42,3 +42,17 @@ mkdir feedback
 sudo apt-get install ffmpeg 
 
 (see ffmeg requirements)
+
+// enable node to bind to ports < 1024 without sudo
+// ## IMPORTANT: WHEN UPDATING NODE / NPM RERUN THE COMMAND ## 
+sudo setcap 'cap_net_bind_service=+ep' /usr/local/bin/node
+
+sudo vim /etc/systemd/journald.conf # set Storage=persistent
+
+
+// INSTALL COMFASH-BE 
+//install deps
+npm install
+
+// install and run service
+sudo bash install.sh <SERVICE_USER> <GROUP_OF_SERVICE_USER>

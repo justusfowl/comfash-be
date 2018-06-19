@@ -12,19 +12,26 @@ fi
 
 echo "Creating directories for public storage..."
 
+
+# i=larger image files from sessions posted
 mkdir $dir/public/i
+
+# t=thumbnail image files from sessions posted
 mkdir $dir/public/t
+
+# o=original image files from sessions posted
 mkdir $dir/public/o
+
+# a=avatars
 mkdir $dir/public/a
+
+# v=videos for 360 views
 mkdir $dir/public/v
 
+# p=public for public files/thumbs downloaded
+mkdir $dir/public/p
+
 echo "Directories created"
-echo "Installing node dependencies"
-
-npm install --prefix $dir
-
-echo "Node deps installed"
-
 
 cat << EOF > /etc/systemd/system/comfash-be.service
 
