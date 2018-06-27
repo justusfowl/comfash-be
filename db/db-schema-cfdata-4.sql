@@ -1,4 +1,15 @@
+use  `cfdata`;
 INSERT INTO tblversion VALUES(4, CURRENT_TIME);
+
+CREATE TABLE `tblinspirations` (
+  `urlHash` varchar(600) NOT NULL,
+  `url` varchar(5000) NOT NULL,
+  `classifyPath` varchar(5000) DEFAULT NULL,
+  `sourcePage` varchar(5000) DEFAULT NULL,
+  `isRejected` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`urlHash`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 
 CREATE TABLE `tblsessionrelations` (
   `userId` varchar(50) NOT NULL,
