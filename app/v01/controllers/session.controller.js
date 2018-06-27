@@ -556,15 +556,18 @@ function uploadCapturedShopSession (req, res){
         "dateCaptured" : req.body.dateCaptured
     }
 
-    var url = "mongodb://" + config.mongodb.username + ":" + config.mongodb.password + "@" + config.mongodb.host + ":27017/";
+    var url = "mongodb://" + 
+        config.mongodb.username + ":" + 
+        config.mongodb.password + "@" + 
+        config.mongodb.host + ":" + config.mongodb.port +"/" + 
+        config.mongodb.database + "/?authSource=" + config.mongodb.database + "&w=1" ;
         
     MongoClient.connect(url, function(err, db) {
 
         if (err) throw err;
 
-        var dbo = db.db(config.mongodb.database);
 
-        dbo.collection("shopSession").insert(shopSession, function(err, result) {
+        db.collection("shopSession").insert(shopSession, function(err, result) {
             
         if (err) throw err;
         console.log(result);
