@@ -27,3 +27,28 @@ CREATE TABLE `tblsessionrelations` (
 ALTER TABLE `cfdata`.`tblinspirations` 
 ADD COLUMN `isRejected` TINYINT(1) NULL DEFAULT 0 AFTER `sourcePage`;
 
+
+INSERT INTO `cfdata`.`tblcollections`
+(`collectionId`,
+`userId`,
+`collectionTitle`,
+`privacyStatus`,
+`collectionDescription`)
+VALUES
+(1,
+'comfash',
+'inspiration',
+3,
+'Gathering for inspiration on outfits and style');
+
+INSERT INTO `cfdata`.`tblusers`
+(`userId`,
+`userName`,
+`userBirthDate`,
+`userAvatarPath`)
+VALUES
+('comfash',
+'comfash',
+NULL,
+'/p/android-icon-192x192.png');
+

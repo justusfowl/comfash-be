@@ -9,7 +9,12 @@ var amqp = require('amqplib/callback_api');
 
 var MongoClient = require('mongodb').MongoClient;
 
-var url = "mongodb://" + config.mongodb.username + ":" + config.mongodb.password + "@" + config.mongodb.host + ":" +config.mongodb.port +"/";
+var url = "mongodb://" + 
+config.mongodb.username + ":" + 
+config.mongodb.password + "@" + 
+config.mongodb.host + ":" + config.mongodb.port +"/" + 
+config.mongodb.database + "/?authSource=" + config.mongodb.database + "&w=1" ;
+
 
 var storageImg = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -118,12 +123,10 @@ function hb(req, res){
 
 function getSearchMetaData(req, res){
     try{
-        MongoClient.connect(url, function(err, client) {
+        MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
             console.log("Database created!");
-
-            const db = client.db("cfdata");
 
             // Get the documents collection
             const collection = db.collection('meta');
@@ -138,6 +141,8 @@ function getSearchMetaData(req, res){
                 }else{
                     res.send(500, "Error, meta version could not be found")
                 }
+
+                db.close();
                 
                 
             });
@@ -154,12 +159,10 @@ function getSearchMetaData(req, res){
 function getSearchItem(req, res){
 
     try{
-        MongoClient.connect(url, function(err, client) {
+        MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
             console.log("Database created!");
-
-            const db = client.db("cfdata");
 
             // Get the documents collection
             const collection = db.collection('inspiration');
@@ -170,6 +173,8 @@ function getSearchItem(req, res){
                 console.log(docs);
 
                 res.json(docs);
+
+                db.close();
                 
             });
     
@@ -188,12 +193,10 @@ function approveSearchItem(req, res){
     let searchItem = req.body.searchItem;
     searchItem["isValidated"] = true;
 
-    MongoClient.connect(url, function(err, client) {
+    MongoClient.connect(url, function(err, db) {
 
         if (err) throw err;
-        console.log("Database created!");
-
-        const db = client.db("cfdata");
+        console.log("Database connected!");
 
         // Get the documents collection
         const collection = db.collection('inspiration');
@@ -206,6 +209,8 @@ function approveSearchItem(req, res){
             res.json(result);
 
             issueValidatedMsg(searchItem);
+
+            db.close();
             
         });
 
@@ -253,18 +258,17 @@ function rejectSearchItem(req, res){
         u = result;
         m = metadata;
 
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(url, function(err, dbo) {
 
             if (err) throw err;
-    
-            var dbo = db.db(config.mongodb.database);
+
             dbo.collection("inspiration").remove({id: id}, function(err, result) {
               if (err) throw err;
               console.log(result);
     
               res.json({"message" : "ok"});
     
-              db.close();
+              dbo.close();
             });
           });
 
