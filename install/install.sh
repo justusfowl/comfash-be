@@ -2,6 +2,8 @@
 
 
 dir=$(dirname `pwd`)
+whichcmd='which node'
+nodepath=`eval $whichcmd`
 user=$2
 group=$3
 
@@ -43,7 +45,7 @@ Description=comfash-be
 
 [Service]
 PIDFile=/tmp/comfash-be.pid
-ExecStart=/usr/local/bin/node $dir/server.js
+ExecStart=$nodepath $dir/server.js
 Restart=always
 User=$user
 Group=$group  
