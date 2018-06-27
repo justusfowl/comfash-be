@@ -18,6 +18,19 @@
 --
 -- Table structure for table `tblcollections`
 --
+DROP TABLE IF EXISTS `tblversion`;
+
+CREATE TABLE `tblversion` (
+  `version` int(11) NOT NULL,
+  `updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+/* Set date of creation for the database of cfdata */ 
+
+INSERT INTO tblversion VALUES(0, CURRENT_TIME);
+
+
 
 DROP TABLE IF EXISTS `tblcollections`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

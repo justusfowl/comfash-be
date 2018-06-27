@@ -1,3 +1,5 @@
+INSERT INTO tblversion VALUES(3, CURRENT_TIME);
+
 CREATE TABLE `tblfeedbacks` (
   `feedbackId` int(11) NOT NULL AUTO_INCREMENT,
   `userId` varchar(50) NOT NULL,
@@ -9,3 +11,4 @@ CREATE TABLE `tblfeedbacks` (
   KEY `feedbackUserId_idx` (`userId`),
   CONSTRAINT `feedbackUserId` FOREIGN KEY (`userId`) REFERENCES `tblusers` (`userId`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+

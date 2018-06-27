@@ -1,3 +1,5 @@
+INSERT INTO tblversion VALUES(2, CURRENT_TIME);
+
 CREATE TABLE `cfdata`.`tblfollowers` (
   `followerId` varchar(50) NOT NULL,
   `followedId` varchar(50) NOT NULL,

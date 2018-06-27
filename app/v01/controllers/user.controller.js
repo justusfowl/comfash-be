@@ -49,10 +49,6 @@ function listGroups (req,res) {
 
 }
 
-function socketGroups (userId){
-
-}
-
 function upsertProfileAvatar (req, res){
 
     let base64Str = req.body.imagePath;

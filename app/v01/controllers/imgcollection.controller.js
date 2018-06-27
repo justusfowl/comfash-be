@@ -48,7 +48,6 @@ function listMyCollections (req,res) {
 }
 
 
-
 function listQry (req,res) {
 
 
@@ -59,10 +58,83 @@ function listQry (req,res) {
 
     let requestUserId = req.auth.userId;
 
+
+    let qryStr = 'SELECT \
+    c.*, \
+    colUs.userName, \
+    colUs.userAvatarPath as userAvatarPath, \
+    s.sessionId, \
+    s.sessionCreated, \
+    s.sessionItemPath, \
+    s.sessionItemType,\
+    s.sessionThumbnailPath,\
+    s.width,\
+    s.height,\
+    s.primeColor,\
+    s.primeFont, \
+    s.filterOption, \
+    s.isMySession, \
+    co.commentId, \
+    co.commentText, \
+    co.commentCreated, \
+    co.xRatio, \
+    co.yRatio, \
+    co.userId as commentUserId, \
+    co.prcSessionItem, \
+    us.userName as commentUserName, \
+    us.userAvatarPath as commentUserAvatarPath, \
+    v.voteType, \
+    v.voteChanged, \
+    v.userId as voteUserId, \
+    g.userIdIsAuthor as priv, \
+    t.tagId, \
+    t.tagUrl, \
+    t.xRatio as tagXRatio, \
+    t.yRatio as tagYRatio, \
+    t.tagBrand, \
+    t.tagImage, \
+    t.tagSeller, \
+    t.tagTitle \
+    FROM tblcollections c\
+    LEFT JOIN (\
+        select *, 1 as isMySession FROM tblsessions\
+        UNION ALL\
+        select \
+        sess.sessionId,\
+        sess.sessionCreated, \
+        rel.targetCollectionId as collectionId,\
+        sess.sessionItemPath,\
+        sess.sessionItemType,\
+        sess.sessionThumbnailPath,\
+        sess.width,\
+        sess.height,\
+        sess.primeColor, \
+        sess.primeFont, \
+        sess.filterOption,\
+        0 as isMySession \
+        FROM tblsessions as sess\
+        INNER JOIN (\
+        SELECT * FROM \
+        cfdata.tblsessionrelations\
+        where {target_column_relations_filter} = ?) as rel on sess.sessionId = rel.sourceSessionId\
+    ) s on c.collectionId = s.collectionId\
+    LEFT JOIN tblcomments co on s.sessionId = co.sessionId \
+    LEFT JOIN tbltags t on s.sessionId = t.sessionId \
+    LEFT JOIN tblusers us on co.userId = us.userId\
+    LEFT JOIN tblusers colUs on c.userId = colUs.userId\
+    LEFT JOIN (SELECT * FROM tblgroupusers WHERE userId = ? ) as g on c.collectionId = g.collectionId \
+    LEFT JOIN tblvotes v on s.sessionId = v.sessionId ';
+
     whereStr = ' WHERE (g.userIdIsAuthor is not null or c.privacyStatus = 0 or c.privacyStatus = 3) AND ';
     qryOption = { raw: true, replacements: [requestUserId], type: models.sequelize.QueryTypes.SELECT}; 
 
+
     if (req.params.collectionId){
+
+        // if collectionId is defined and requested then add this to the session-relation nested join 
+
+        qryOption.replacements.unshift(req.params.collectionId)
+        qryStr = qryStr.replace("{target_column_relations_filter}", "targetCollectionId")
         
         whereStr += ' c.collectionId = ? ';
         qryOption.replacements.push(req.params.collectionId);
@@ -74,6 +146,11 @@ function listQry (req,res) {
          
     }
     else if (req.query.session){
+
+        // WARNING: The following is a work-around to not include any sessions from the sessionrelations table
+        qryOption.replacements.unshift(1)
+        qryStr = qryStr.replace("{target_column_relations_filter}", "0")
+
         isSessionRequested = true;
         whereStr += ' s.sessionId in ( ';
 
@@ -98,53 +175,19 @@ function listQry (req,res) {
 
     }
     else{
+
+        // if userId is defined and requested then add this to the session-relation nested join 
+
+        qryOption.replacements.unshift(userId)
+        qryStr = qryStr.replace("{target_column_relations_filter}", "userId")
+        
         whereStr += ' c.userId = ?';
         qryOption.replacements.push(userId);
     }
 
-    let qryStr = 'SELECT \
-    c.*, \
-    colUs.userName, \
-    colUs.userAvatarPath as userAvatarPath, \
-    s.sessionId, \
-    s.sessionCreated, \
-    s.sessionItemPath, \
-    s.sessionItemType,\
-    s.sessionThumbnailPath,\
-    s.width,\
-    s.height,\
-    s.primeColor,\
-    s.primeFont, \
-    s.filterOption, \
-    co.commentId, \
-    co.commentText, \
-    co.commentCreated, \
-    co.xRatio, \
-    co.yRatio, \
-    co.userId as commentUserId, \
-    co.prcSessionItem, \
-    us.userName as commentUserName, \
-    us.userAvatarPath as commentUserAvatarPath, \
-    v.voteType, \
-    v.voteChanged, \
-    v.userId as voteUserId, \
-    g.userIdIsAuthor as priv, \
-    t.tagId, \
-    t.tagUrl, \
-    t.xRatio as tagXRatio, \
-    t.yRatio as tagYRatio, \
-    t.tagBrand, \
-    t.tagImage, \
-    t.tagSeller, \
-    t.tagTitle \
-    FROM tblcollections c\
-    LEFT JOIN tblsessions s on c.collectionId = s.collectionId\
-    LEFT JOIN tblcomments co on s.sessionId = co.sessionId \
-    LEFT JOIN tbltags t on s.sessionId = t.sessionId \
-    LEFT JOIN tblusers us on co.userId = us.userId\
-    LEFT JOIN tblusers colUs on c.userId = colUs.userId\
-    LEFT JOIN (SELECT * FROM tblgroupusers WHERE userId = ? ) as g on c.collectionId = g.collectionId \
-    LEFT JOIN tblvotes v on s.sessionId = v.sessionId ' + whereStr +
+
+    
+    qryStr += whereStr +
     ' ORDER BY c.collectionId, s.sessionCreated desc, co.commentId;';
 
     models.sequelize.query(
@@ -214,6 +257,7 @@ function listQry (req,res) {
                 "primeColor" : element.primeColor,
                 "primeFont" : element.primeFont,
                 "filterOption" : element.filterOption,
+                "isMySession" : element.isMySession,
                 "comments" : [], 
                 "votes"  : [], 
                 "tags" : []

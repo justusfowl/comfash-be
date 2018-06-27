@@ -1,3 +1,5 @@
+INSERT INTO tblversion VALUES(1, CURRENT_TIME);
+
 CREATE TABLE `tblcomplaints` (
   `objectId` varchar(100) NOT NULL,
   `userId` varchar(100) NOT NULL,

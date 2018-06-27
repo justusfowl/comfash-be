@@ -40,6 +40,10 @@ router.route('/sessions')
 
     .get(imgCollectionCtrl.listQry)
 
+router.route('/shopSessions')
+
+    .post(sessionCtrl.uploadCapturedShopSession)
+
 router.route('/compare')
 
     .get(comparehistCtrl.listCompareHist)
@@ -77,6 +81,14 @@ router.route('/:collectionId/session/:sessionId')
     .get(imgCollectionCtrl.listQry)
 
     .delete(sessionCtrl.deleteSession)
+
+router.route('/:collectionId/connectSession/:sessionId')
+
+    .get(sessionCtrl.getSessionRelationInfo)
+
+    .post(sessionCtrl.addSessionRelation)
+
+    .delete(sessionCtrl.removeSessionRelation)
 
 router.route('/:collectionId/session/:sessionId/comment')
 

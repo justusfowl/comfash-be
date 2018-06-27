@@ -4,24 +4,20 @@ const Op = Sequelize.Op;
 var fs = require('fs');
 var hash = require ('string-hash');
 const path = require('path')
-
 const multer = require('multer');
 var messageCtrl = require('../controllers/message.controller');
 var tagCtrl = require('../controllers/tag.controller');
-
 var config  = require('../../config/config');
-
-
 var ffmpeg = require('fluent-ffmpeg');
-
 var socketCtrl = require('../socket/socket.controller');
-
 const getColors = require('get-image-colors')
 var sizeOf = require('image-size');
 var rgb2hex = require('rgb2hex');
-
+var MongoClient = require('mongodb').MongoClient;
 var sharp = require("sharp");
-
+var base64ToImage = require('base64-to-image');
+var sessionConn = require("../connectors/session.connector")
+var sessionRelConn = require('../connectors/sessionrelation.connector')
 
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -395,6 +391,8 @@ function uploadImage(req, res){
 
 function deleteSession(req, res){
 
+    console.warn("HIER NOCH CHECKEN, OB BERECHTIGUNGEN VORLIEGEN")
+
     models.tblsessions.findAll({
         where: {
             sessionId: req.params.sessionId
@@ -439,4 +437,153 @@ function deleteSession(req, res){
 
 }
 
-module.exports =   { list, create, uploadVideo, uploadImage, uploadImageMw, deleteSession };
+function addSessionRelation(req, res){
+
+    let targetCollectionId = req.params.collectionId;
+    let sourceSessionId = req.params.sessionId;
+    let userId = req.auth.userId; 
+
+    const relation = models.tblsessionrelations.upsert({
+        targetCollectionId: targetCollectionId,
+        sourceSessionId: sourceSessionId,
+        userId: userId
+    }).then(relation => {
+
+        console.log("relation saved");
+
+        let responseObj = {
+            "isMySession" : false, 
+            "isSaved" : true, 
+            "targetCollectionId" : targetCollectionId
+        };
+
+        res.json(responseObj);
+        
+      })
+      .catch(error => {
+        // Ooops, do some error-handling
+        console.log(error);
+        config.logger.error(error);
+        res.send(500, error);
+      })
+
+}
+
+function getSessionRelationInfo(req, res){
+
+    try{
+
+
+        let userId = req.auth.userId; 
+        let sessionId = req.params.sessionId; 
+
+
+        (async () => {
+
+            let responseObj = {};
+
+            let sessionInfo = await sessionConn.getSessionInfo(sessionId);
+
+            if (sessionInfo[0].userId == userId){
+                responseObj["isMySession"] = true;
+            }else{
+                responseObj["isMySession"] = false;
+            }
+
+            let sessionRelationInfo = await sessionRelConn.getSessionRelationInfo(userId, sessionId);
+
+            if (sessionRelationInfo.length > 0){
+                responseObj["isSaved"] = true;
+                responseObj["targetCollectionId"] = sessionRelationInfo[0].targetCollectionId;
+            }else{
+                responseObj["isSaved"] = false;
+                responseObj["targetCollectionId"] = null;
+            }
+
+            
+            res.json(responseObj);
+
+        })();
+
+        return true;
+
+    }catch(error){
+        res.send(500, "Server error retrieving sessionrelation information");
+        config.logger.error(error);
+    }
+
+}
+
+function removeSessionRelation(req, res){
+
+    var userId = req.auth.userId;
+
+    models.tblsessionrelations.destroy({
+        where: {
+            userId : userId,
+            sourceSessionId: req.params.sessionId
+          }
+    }).then(function(session) {
+            res.json({"message" : "ok"});
+        }, function(error) {
+            config.logger.error(error);
+            res.send("something went wrong deleting sessionrelation");
+    });
+
+}
+
+
+function uploadCapturedShopSession (req, res){
+
+    try{
+
+        let userId = req.auth.userId;   
+        let sessionData = req.body.sessionData;
+        let captureSessionId = req.body.captureSessionId; 
+
+        // place pictures in folder a for avatars
+        let targetPath = config.publicDir  + '/s/';
+
+        var optionalObj = {'fileName': captureSessionId, 'type':'jpeg'}; 
+        
+        var imageInfo = base64ToImage(sessionData,targetPath,optionalObj); 
+
+    let shopSession = {
+        "captureSessionId" : req.body.captureSessionId,
+        "userId" : userId,
+        "path" : '/s/' + imageInfo.fileName,
+        "shopId" : req.body.shopId,
+        "dateCaptured" : req.body.dateCaptured
+    }
+
+    var url = "mongodb://" + config.mongodb.username + ":" + config.mongodb.password + "@" + config.mongodb.host + ":27017/";
+        
+    MongoClient.connect(url, function(err, db) {
+
+        if (err) throw err;
+
+        var dbo = db.db(config.mongodb.database);
+
+        dbo.collection("shopSession").insert(shopSession, function(err, result) {
+            
+        if (err) throw err;
+        console.log(result);
+
+        res.json({"message" : "ok"});
+
+        db.close();
+        });
+    });
+    
+    }catch(err){
+        config.logger.error(err);
+        console.log(err);
+        res.send("something went wrong uploading the shop session");
+    }
+
+
+}
+
+
+module.exports =   { list, create, uploadVideo, uploadImage, uploadImageMw, 
+    deleteSession, removeSessionRelation, addSessionRelation, getSessionRelationInfo, uploadCapturedShopSession};

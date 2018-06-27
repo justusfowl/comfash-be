@@ -25,7 +25,4 @@ async function getSessionInfo (sessionId) {
 }
 
 
-
-
-
 module.exports =   { getSessionInfo };

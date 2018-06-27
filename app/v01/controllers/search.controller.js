@@ -11,8 +11,6 @@ var MongoClient = require('mongodb').MongoClient;
 var solr = require('solr-client');
 var solrClient = solr.createClient(config.solr.server, config.solr.port, config.solr.core, '/solr');
 
-
-
 function searchUser (req,res) {
 
     let searchStr = req.query.userSearch; 
@@ -49,93 +47,109 @@ function searchUser (req,res) {
     });
 }
 
-
-
 function searchOutfits(req, res){
 
-    let searchTerm = req.query.searchTerm;
-    let filters = JSON.parse(req.query.filters);
-    let top = req.query.top || 10;
-    let skip = req.query.skip || 0;
+    try{
 
-    let sortedFilters = _.sortBy(filters, 'target');
+        let searchTerm = req.query.searchTerm;
+        let filters;
 
-    // var groupedFilters = _.chain(sortedFilters).groupBy("target").value();
+        try{
+            filters = JSON.parse(req.query.filters);
+        }catch(err){
+            filters = [];
+        }
+        
+        let top = req.query.top || 10;
+        let skip = req.query.skip || 0;
 
-    let qryString = '{!parent which="content_type:parentDocument"}';
-    
+        let sortedFilters = _.sortBy(filters, 'target');
 
-    if (searchTerm && searchTerm.length > 0){
-        qryString += '(labels:*' + searchTerm.toLowerCase() + '*)'
-    }
+        // var groupedFilters = _.chain(sortedFilters).groupBy("target").value();
 
-    // DixMax query
-    var query = solrClient.createQuery().q(qryString).start(skip).rows(top);
-    
-    for (var i=0; i<sortedFilters.length; i++){
-        let keyWord = sortedFilters[i].category;
-        let target = sortedFilters[i].target;
-        let color = sortedFilters[i].color;
+        let qryString = '{!parent which="content_type:parentDocument"}';
+        
 
-        let wildcard = "";
-        let attr_color = "";
-
-        if (target != "gender"){
-            wildcard = "*"
+        if (searchTerm && searchTerm.length > 0){
+            qryString += '(labels:*' + searchTerm.toLowerCase() + '*)'
         }
 
-        if (color){
-            attr_color = ' and +attr_color:' + color.toLowerCase()
+        // DixMax query
+        var query = solrClient.createQuery().q(qryString).start(skip).rows(top);
+        
+        for (var i=0; i<sortedFilters.length; i++){
+            let keyWord = sortedFilters[i].category;
+            let target = sortedFilters[i].target;
+            let color = sortedFilters[i].color;
+
+            let wildcard = "";
+            let attr_color = "";
+
+            if (target != "gender"){
+                wildcard = "*"
+            }
+
+            if (color){
+                attr_color = ' and +attr_color:' + color.name.toLowerCase()
+            }
+
+            let fq = '{!parent which="content_type:parentDocument"}(+labels:' + wildcard + keyWord.toLowerCase() + wildcard + ' and +attr_type:' + target.toLowerCase() + attr_color + ')';
+            query.parameters.push("fq=" + encodeURIComponent(fq))
         }
 
-        let fq = '{!parent which="content_type:parentDocument"}(+labels:' + wildcard + keyWord.toLowerCase() + wildcard + ' and +attr_type:' + target.toLowerCase() + attr_color + ')';
-        query.parameters.push("fq=" + encodeURIComponent(fq))
-    }
+        let searchHandler = function(err,obj){
 
-    let searchHandler = function(err,obj){
-
-        if(err){
-            console.log(err);
-            res.send(500, err);
-        }else{
-            res.json(obj.response)
-            console.log(obj);
+            if(err){
+                console.log(err);
+                res.send(500, err);
+            }else{
+                res.json(obj.response)
+                console.log(obj);
+            }
         }
+
+        solrClient.search(query,searchHandler);
+
+    }catch(err){
+        config.logger.error("Error in the searchOutfits part");
+        config.logger.error(err);
     }
-
-    solrClient.search(query,searchHandler);
-
 }
 
 function outfitMoreDetails(req, res){
 
-    var url = "mongodb://" + config.mongodb.username + ":" + config.mongodb.password + "@" + config.mongodb.host + ":27017/";
-    var outfitId = req.params.outfitId
-
-    MongoClient.connect(url, function(err, db) {
-
-        if (err) throw err;
-
-        var dbo = db.db(config.mongodb.database);
-        dbo.collection("inspiration").find({id: outfitId}).toArray(function(err, result) {
-          if (err) throw err;
-          console.log(result);
-
-          if (result.length == 1){
-            res.json(result[0]);
-          }else{
-              if (result.length == 0){
-                  res.json([])
+    try{
+        var url = "mongodb://" + config.mongodb.username + ":" + config.mongodb.password + "@" + config.mongodb.host + ":" + config.mongodb.port +"/";
+        var outfitId = req.params.outfitId
+    
+        MongoClient.connect(url, function(err, db) {
+    
+            if (err) throw err;
+    
+            var dbo = db.db(config.mongodb.database);
+            dbo.collection("inspiration").find({id: outfitId}).toArray(function(err, result) {
+              if (err) throw err;
+              console.log(result);
+    
+              if (result.length == 1){
+                res.json(result[0]);
               }else{
-                res.send(500, "multiple entries available, check database")
+                  if (result.length == 0){
+                      res.json([])
+                  }else{
+                    res.send(500, "multiple entries available, check database")
+                  }
+                
               }
-            
-          }
-
-          db.close();
-        });
-      });
-
+    
+              db.close();
+            });
+          });
+    
+    }catch(err){
+        res.send(500, "Error connecting to mongodb")
+    }
+   
 
 }
 

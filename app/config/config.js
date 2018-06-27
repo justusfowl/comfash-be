@@ -38,10 +38,6 @@ const config = {
     morganMiddleWare : logger.morganMiddleWare,
     env: env,
     port: port,
-    auth : {
-      jwtSecret: process.env.JWT_SECRET,
-      expiresIn: process.env.JWT_EXPIRES_IN
-    },
     APIVersion: '01',
 
     mysql: {
@@ -57,7 +53,8 @@ const config = {
       username: process.env.MONGO_USER,
       password: process.env.MONGO_PASS,
       database: process.env.MONGO_DB,
-      host: process.env.MONGO_HOST
+      host: process.env.MONGO_HOST, 
+      port : process.env.MONGO_PORT 
     },
 
     solr: {
@@ -73,13 +70,16 @@ const config = {
     }, 
 
     auth : {
+      jwtSecret: process.env.JWT_SECRET,
+      expiresIn: process.env.JWT_EXPIRES_IN,
       auth0_secret : process.env.AUTH0_SECRET, 
       auth0_client_id: process.env.AUTH0_CLIENT_ID, 
       auth0_client_secret: process.env.AUTH0_CLIENT_SECRET, 
       auth0_audience : process.env.AUTH0_AUDIENCE, 
       auth0_domain: process.env.AUTH0_DOMAIN, 
       jwksUri : process.env.JWKS_URI,
-      iss : process.env.ISS
+      iss : process.env.ISS, 
+      api_secret : process.env.API_SECRET
     }, 
     facebook : {
       "app_id" : process.env.FB_APP_ID, 

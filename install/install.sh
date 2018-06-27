@@ -31,6 +31,9 @@ mkdir $dir/public/v
 # p=public for public files/thumbs downloaded
 mkdir $dir/public/p
 
+# s=shop for shop uploads 
+mkdir $dir/public/s
+
 echo "Directories created"
 
 cat << EOF > /etc/systemd/system/comfash-be.service
