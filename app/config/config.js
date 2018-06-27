@@ -31,7 +31,6 @@ else if (env == 'production'){
 }
 
 
-
 const config = {
     logger : logger.logger,
     sqlLogger : logger.sqlLogger,

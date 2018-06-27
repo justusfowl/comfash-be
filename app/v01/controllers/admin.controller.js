@@ -13,7 +13,7 @@ var url = "mongodb://" +
 config.mongodb.username + ":" + 
 config.mongodb.password + "@" + 
 config.mongodb.host + ":" + config.mongodb.port +"/" + 
-config.mongodb.database + "/?authSource=" + config.mongodb.database + "&w=1" ;
+config.mongodb.database + "?authSource=" + config.mongodb.database + "&w=1" ;
 
 
 var storageImg = multer.diskStorage({
@@ -128,8 +128,10 @@ function getSearchMetaData(req, res){
             if (err) throw err;
             console.log("Database created!");
 
+            let dbo = db.db("cfdata");
+
             // Get the documents collection
-            const collection = db.collection('meta');
+            const collection = dbo.collection('meta');
             // Find some documents
 
             // get meta data for version 1.0
@@ -164,8 +166,10 @@ function getSearchItem(req, res){
             if (err) throw err;
             console.log("Database created!");
 
+            let dbo = db.db("cfdata");
+
             // Get the documents collection
-            const collection = db.collection('inspiration');
+            const collection = dbo.collection('inspiration');
             // Find some documents
             collection.find({"isValidated" : false}).limit(5).toArray(function(err, docs) {
                 
@@ -198,8 +202,10 @@ function approveSearchItem(req, res){
         if (err) throw err;
         console.log("Database connected!");
 
+        let dbo = db.db("cfdata");
+
         // Get the documents collection
-        const collection = db.collection('inspiration');
+        const collection = dbo.collection('inspiration');
         // Find some documents
         collection.replaceOne({"id" : searchItem.id}, searchItem ,function(err, result) {
             
@@ -258,9 +264,11 @@ function rejectSearchItem(req, res){
         u = result;
         m = metadata;
 
-        MongoClient.connect(url, function(err, dbo) {
+        MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
+
+            let dbo = db.db("cfdata");
 
             dbo.collection("inspiration").remove({id: id}, function(err, result) {
               if (err) throw err;
@@ -268,7 +276,7 @@ function rejectSearchItem(req, res){
     
               res.json({"message" : "ok"});
     
-              dbo.close();
+              db.close();
             });
           });
 

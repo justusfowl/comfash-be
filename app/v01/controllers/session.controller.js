@@ -560,14 +560,15 @@ function uploadCapturedShopSession (req, res){
         config.mongodb.username + ":" + 
         config.mongodb.password + "@" + 
         config.mongodb.host + ":" + config.mongodb.port +"/" + 
-        config.mongodb.database + "/?authSource=" + config.mongodb.database + "&w=1" ;
+        config.mongodb.database + "?authSource=" + config.mongodb.database + "&w=1" ;
         
     MongoClient.connect(url, function(err, db) {
 
         if (err) throw err;
 
-
-        db.collection("shopSession").insert(shopSession, function(err, result) {
+        let dbo = db.db("cfdata");
+        
+        dbo.collection("shopSession").insert(shopSession, function(err, result) {
             
         if (err) throw err;
         console.log(result);
@@ -581,12 +582,19 @@ function uploadCapturedShopSession (req, res){
     }catch(err){
         config.logger.error(err);
         console.log(err);
-        res.send("something went wrong uploading the shop session");
+        res.send(500, "something went wrong uploading the shop session");
     }
-
-
 }
 
-
-module.exports =   { list, create, uploadVideo, uploadImage, uploadImageMw, 
-    deleteSession, removeSessionRelation, addSessionRelation, getSessionRelationInfo, uploadCapturedShopSession};
+module.exports = { 
+    list, 
+    create, 
+    uploadVideo, 
+    uploadImage,
+    uploadImageMw, 
+    deleteSession, 
+    removeSessionRelation, 
+    addSessionRelation, 
+    getSessionRelationInfo, 
+    uploadCapturedShopSession
+};
