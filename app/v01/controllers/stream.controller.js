@@ -125,8 +125,10 @@ function getStream (req,res) {
 
     let flagUserActivity = req.query.flagIsUserId;
 
+    let requestingUserId = req.auth.userId;
+
     let options = {
-        userId : req.auth.userId,
+        userId : requestingUserId,
         limit: limit, 
         skip : skip, 
         flagUserActivity : flagUserActivity
@@ -140,6 +142,16 @@ function getStream (req,res) {
         let output = trendComments.concat(trendVotes);
 
         let sortedOutput = _.orderBy(output, 'refDate', 'desc');
+
+        function checkOnIsMySession(element){
+            if (element.colOwnerId == requestingUserId){
+                element["isMySession"] = true
+            }else{
+                element["isMySession"] = false
+            }
+        }
+
+        _.forEach(sortedOutput, checkOnIsMySession )
 
         res.json(sortedOutput)
 

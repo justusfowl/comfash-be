@@ -263,9 +263,19 @@ function listQry (req,res) {
                 "tags" : []
              };
 
-             if (element.voteUserId == requestUserId){
-                 session.myVote = vote;
-             }
+            if (element.voteUserId == requestUserId){
+                session.myVote = vote;
+            }
+            
+            if (session.isMySession){
+                if (element.userId == requestUserId){
+                    session.isMySession = true;
+                }else{
+                    session.isMySession = false;
+                }
+            }else{
+                session.isMySession = false;
+            }
 
           var collectionIndex = -1, 
                 sessionIndex = -1, 
