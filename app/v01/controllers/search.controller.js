@@ -3,9 +3,18 @@ var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 var config = require("../../config/config");
 var _ = require('lodash');
+
 var MongoClient = require('mongodb').MongoClient;
 
+var url = "mongodb://" + 
+config.mongodb.username + ":" + 
+config.mongodb.password + "@" + 
+config.mongodb.host + ":" + config.mongodb.port +"/" + 
+config.mongodb.database + "?authSource=" + config.mongodb.database + "&w=1" ;
 
+
+const request = require('request');
+const http = require("http")
 // HIER NOCH AUSLAGERNIN CONFIG 
 
 var solr = require('solr-client');
@@ -47,11 +56,63 @@ function searchUser (req,res) {
     });
 }
 
+function getSearchMetaData(req, res){
+    try{
+        MongoClient.connect(url, function(err, db) {
+
+            if (err) throw err;
+            
+            let dbo = db.db("cfdata");
+
+            // Get the documents collection
+            const collection = dbo.collection('meta');
+            // Find some documents
+
+            // get meta data for version 1.0
+
+            collection.find({"version" : 1}).toArray(function(err, docs) {
+
+                if (docs.length > 0){
+                    res.json(docs[0]);
+                }else{
+                    res.send(500, "Error, meta version could not be found")
+                }
+
+                db.close();
+                
+                
+            });
+    
+            
+          });
+    }
+    catch(err){
+        console.log(err)
+        res.send(500, "Error")
+    }
+}
+
 function searchOutfits(req, res){
 
     try{
 
+        let validFilterFieldKeys = [
+            "attr_category", 
+            "attr_color", 
+            "sex"
+        ]
+
+        let validSearchLang = [
+            "en", "de"
+        ];
+        
         let searchTerm = req.query.searchTerm;
+        let searchLang = req.query.searchLang;
+
+        if (validSearchLang.indexOf(searchLang) == -1){
+            searchLang = "en";
+        }
+
         let filters;
 
         try{
@@ -63,53 +124,158 @@ function searchOutfits(req, res){
         let top = req.query.top || 10;
         let skip = req.query.skip || 0;
 
-        let sortedFilters = _.sortBy(filters, 'target');
-
-        // var groupedFilters = _.chain(sortedFilters).groupBy("target").value();
-
-        let qryString = '{!parent which="content_type:parentDocument"}';
         
+
+        let qryString;
 
         if (searchTerm && searchTerm.length > 0){
-            qryString += '(labels:*' + searchTerm.toLowerCase() + '*)'
-        }
 
-        // DixMax query
-        var query = solrClient.createQuery().q(qryString).start(skip).rows(top);
-        
-        for (var i=0; i<sortedFilters.length; i++){
-            let keyWord = sortedFilters[i].category;
-            let target = sortedFilters[i].target;
-            let color = sortedFilters[i].color;
-
-            let wildcard = "";
-            let attr_color = "";
-
-            if (target != "gender"){
-                wildcard = "*"
-            }
-
-            if (color){
-                attr_color = ' and +attr_color:' + color.name.toLowerCase()
-            }
-
-            let fq = '{!parent which="content_type:parentDocument"}(+labels:' + wildcard + keyWord.toLowerCase() + wildcard + ' and +attr_type:' + target.toLowerCase() + attr_color + ')';
-            query.parameters.push("fq=" + encodeURIComponent(fq))
-        }
-
-        let searchHandler = function(err,obj){
-
-            if(err){
-                console.log(err);
-                res.send(500, err);
+            // hier noch searchLang berücksichtigen -> aktuell tags_de leer
+            /*
+            if (searchLang != "en"){
+                qryString = "tags_" + searchLang + ":" + searchTerm.toLowerCase();
             }else{
-                res.json(obj.response)
-                console.log(obj);
+                qryString = searchTerm.toLowerCase();
             }
+            */
+           qryString = searchTerm.toLowerCase();
+
+        }else{
+            qryString = '*:*'
         }
 
-        solrClient.search(query,searchHandler);
+       var reqBody = {
+        "query" : qryString,
+        "params": {
+            "rows" : top, 
+            "start" : skip,
+          },
+        "filter" : ["content_type:parentDocument"],
+        "facet": {
+            "attr_category" : {
+                "type": "terms",
+                "field": "attr_category",
+                "limit" : 20000,
+                "domain": { "blockChildren" : "content_type:parentDocument" },
+                "facet": {
+                    "colors" : {
+                        "type": "terms",
+                        "field": "attr_color"
+                        }
+                    }
+                },
+            "attr_color" : {
+                "type": "terms",
+                "field": "attr_color",
+                "limit" : 20000,
+                "domain": { "blockChildren" : "content_type:parentDocument" }
+            },
+            "sex" : {
+                "type": "terms",
+                "field": "sex",
+                "domain": { "blockChildren" : "content_type:parentDocument" }
+            }
+      }
+    }
 
+
+
+       for (var i=0; i<filters.length; i++){
+
+        let filterTargetItem = filters[i];
+        let color; 
+        let hasColor = false;
+
+
+        let numberOfFilters = filterTargetItem.filters.length;
+
+        let fq;
+
+        if (numberOfFilters > 0 ){
+
+            if (filterTargetItem.attr_color){
+                color = filterTargetItem.attr_color.name;
+                hasColor = true;
+            }
+
+            let counterFilterTargets = 1;
+
+             fq = "{!parent which='content_type:parentDocument'}("
+    
+            for (var j=0;j<filterTargetItem.filters.length;j++){
+    
+                let fqInner = "("
+    
+                let filterItem = filterTargetItem.filters[j];
+
+                if (hasColor){
+                    filterItem["attr_color"] = color;
+                }
+    
+                let counterFilterItems = 1;
+    
+                let validKeysOfFilterItem = [];
+    
+                Object.keys(filterItem).forEach(function(key,index) {
+    
+                    if (validFilterFieldKeys.indexOf(key) != -1){
+                        validKeysOfFilterItem.push(key);
+                       
+                    }
+    
+                });
+    
+                let numberOfKeys = validKeysOfFilterItem.length;
+    
+                for (var k=0;k<validKeysOfFilterItem.length;k++){
+                    let key = validKeysOfFilterItem[k];
+    
+                    fqInner += "+" + key + ":" + filterItem[key]
+    
+                    if (counterFilterItems != numberOfKeys){
+                        fqInner += " AND "
+                    }
+    
+                    counterFilterItems++;
+                }
+    
+                fqInner += ")"
+    
+                if (counterFilterTargets != numberOfFilters){
+                    fqInner += " OR "
+                }
+    
+                counterFilterTargets++;
+    
+                fq += fqInner;
+    
+    
+            }
+    
+            fq += ")"
+        }else if (filterTargetItem.attr_color){
+
+            fq = "{!parent which='content_type:parentDocument'}((+attr_color:" + filterTargetItem.attr_color.name + ") AND (+attr_type:" + filterTargetItem.attr_type + " ))"
+
+        }
+
+        if (fq){
+            reqBody.filter.push(fq);
+        }
+        
+       }
+
+
+        request.post({
+        json: true,
+        url:     'http://192.0.0.119:8983/solr/comfash-sessions/query',
+        body: reqBody
+        }, function(error, response, responseBody){
+            console.log(responseBody);
+            res.json(responseBody)
+        });
+
+       
     }catch(err){
         config.logger.error("Error in the searchOutfits part");
         config.logger.error(err);
@@ -154,4 +320,4 @@ function outfitMoreDetails(req, res){
 }
 
 
-module.exports =   { searchUser, searchOutfits, outfitMoreDetails };
+module.exports =   { searchUser, getSearchMetaData, searchOutfits, outfitMoreDetails };

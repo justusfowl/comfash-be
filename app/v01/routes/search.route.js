@@ -10,6 +10,10 @@ router.route('/')
 
     .get(searchCtrl.searchUser)
 
+router.route('/filtermeta')
+
+    .get(searchCtrl.getSearchMetaData)
+
 router.route('/outfits')
 
     .get(searchCtrl.searchOutfits)

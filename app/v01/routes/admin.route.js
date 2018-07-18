@@ -1,6 +1,7 @@
 var express         = require('express'); 
 var config  = require('../../config/config');
-var adminCtrl = require('../controllers/admin.controller')
+var adminCtrl = require('../controllers/admin.controller');
+var searchCtrl = require('../controllers/search.controller');
 
 var router = express.Router(); 
 
@@ -23,6 +24,6 @@ router.route('/searchmeta/:id')
     
 router.route('/searchmeta/metadata')
 
-    .get(adminCtrl.getSearchMetaData)
+    .get(searchCtrl.getSearchMetaData)
 
 module.exports = router;

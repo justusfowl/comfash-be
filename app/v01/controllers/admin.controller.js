@@ -121,43 +121,6 @@ function hb(req, res){
 
 }
 
-function getSearchMetaData(req, res){
-    try{
-        MongoClient.connect(url, function(err, db) {
-
-            if (err) throw err;
-            console.log("Database created!");
-
-            let dbo = db.db("cfdata");
-
-            // Get the documents collection
-            const collection = dbo.collection('meta');
-            // Find some documents
-
-            // get meta data for version 1.0
-
-            collection.find({"version" : 1}).toArray(function(err, docs) {
-
-                if (docs.length > 0){
-                    res.json(docs[0]);
-                }else{
-                    res.send(500, "Error, meta version could not be found")
-                }
-
-                db.close();
-                
-                
-            });
-    
-            
-          });
-    }
-    catch(err){
-        console.log(err)
-        res.send(500, "Error")
-    }
-}
-
 function getSearchItem(req, res){
 
     try{
@@ -291,4 +254,4 @@ function rejectSearchItem(req, res){
 
 }
 
-module.exports = { hb, addCrawlSession, uploadImageMw, getSearchItem, getSearchMetaData, approveSearchItem, rejectSearchItem};
+module.exports = { hb, addCrawlSession, uploadImageMw, getSearchItem, approveSearchItem, rejectSearchItem};

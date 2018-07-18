@@ -7,7 +7,7 @@ nodepath=`eval $whichcmd`
 user=$2
 group=$3
 
-if [ "$1" == "" ] || ["$1" == "" ]; then
+if ["$2" == ""] || ["$3" == ""]; then
     echo "No arguments provided, please provide: 1:Environment (default: development), 2: user, 3: group"
     exit 1
 fi
