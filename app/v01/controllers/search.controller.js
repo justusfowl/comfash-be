@@ -18,7 +18,6 @@ const http = require("http")
 // HIER NOCH AUSLAGERNIN CONFIG 
 
 var solr = require('solr-client');
-var solrClient = solr.createClient(config.solr.server, config.solr.port, config.solr.core, '/solr');
 
 function searchUser (req,res) {
 
@@ -265,12 +264,16 @@ function searchOutfits(req, res){
         
        }
 
-
         request.post({
         json: true,
-        url:     'http://192.0.0.119:8983/solr/comfash-sessions/query',
+        url:     'http://' + config.solr.server + ':' + config.solr.port + '/solr/' + config.solr.core + '/query',
         body: reqBody
         }, function(error, response, responseBody){
+
+            if (error){
+                config.logger.error("Error posting to search engine");
+                res.send(500, "Error posting to search engine")
+            }
             console.log(responseBody);
             res.json(responseBody)
         });
