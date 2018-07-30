@@ -121,6 +121,7 @@ function hb(req, res){
 
 }
 
+
 function getSearchItem(req, res){
 
     try{
@@ -134,18 +135,31 @@ function getSearchItem(req, res){
             // Get the documents collection
             const collection = dbo.collection('inspiration');
             // Find some documents
-            collection.find({"isValidated" : false}).limit(5).toArray(function(err, docs) {
+            collection.find(
+                {$and : [
+                    {"isValidated" : false}, 
+                    {$or: [
+                        {lockTime : {$exists: false}},
+                        {lockTime:  {$lt: new Date((new Date())-1000*60*60*24)}}
+                        ]
+                    }
+                
+                ]}
+            ).limit(1).toArray(function(err, docs) {
                 
                 console.log("Found the following records");
                 console.log(docs);
 
                 res.json(docs);
 
+                if (docs.length > 0){
+                    collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                }
+
                 db.close();
                 
             });
     
-            
           });
     }
     catch(err){
