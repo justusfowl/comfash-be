@@ -26,9 +26,9 @@ var socketioJwt = require('socketio-jwt');
 var routes      = require('./app/v01/routes/index.route');
 
 var options = {
-	key: fs.readFileSync('comfash.local.key'),
-	cert: fs.readFileSync('comfash.local.crt'),
-	ca: fs.readFileSync('rootCA.pem')
+	key: fs.readFileSync(config.https.key),
+	cert: fs.readFileSync(config.https.crt),
+	ca: fs.readFileSync(config.https.ca)
   };
 
 

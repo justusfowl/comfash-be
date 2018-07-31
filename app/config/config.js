@@ -39,6 +39,12 @@ const config = {
     port: port,
     APIVersion: '01',
 
+    https: {
+      key : process.env.HTTPS_KEY,
+      crt : process.env.HTTPS_CRT,
+      ca : process.env.HTTPS_ROOTCA,
+    },
+
     mysql: {
       username: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASS || "",
