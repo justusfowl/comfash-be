@@ -91,8 +91,7 @@ const config = {
       mqServer: process.env.MQ_SERVER,
       mqUser: process.env.MQ_USER,
       mqPassword: process.env.MQ_PASSWORD,
-      mqPort: process.env.MQ_Port,
-
+      mqPort: process.env.MQ_PORT
     }
   };
   
