@@ -98,7 +98,9 @@ function searchOutfits(req, res){
         let validFilterFieldKeys = [
             "attr_category", 
             "attr_color", 
-            "sex"
+            "sex", 
+            "attr_fabric",
+            "attr_texture"
         ]
 
         let validSearchLang = [
@@ -108,9 +110,7 @@ function searchOutfits(req, res){
         let searchTerm = req.query.searchTerm;
         let searchLang = req.query.searchLang;
 
-        if (validSearchLang.indexOf(searchLang) == -1){
-            searchLang = "en";
-        }
+
 
         let filters;
 
@@ -127,17 +127,21 @@ function searchOutfits(req, res){
 
         let qryString;
 
+        if (validSearchLang.indexOf(searchLang) == -1){
+            searchLang = "en";
+        }
+
         if (searchTerm && searchTerm.length > 0){
 
             // hier noch searchLang berücksichtigen -> aktuell tags_de leer
-            /*
+            
             if (searchLang != "en"){
-                qryString = "tags_" + searchLang + ":" + searchTerm.toLowerCase();
+                qryString = "tags_" + searchLang + ":" 
             }else{
-                qryString = searchTerm.toLowerCase();
+                qryString = "tags_en:";
             }
-            */
-           qryString = searchTerm.toLowerCase();
+            
+           qryString += '("'  + searchTerm.toLowerCase() + '"~10)^10 OR (' +  searchTerm.toLowerCase() + ")^2";
 
         }else{
             qryString = '*:*'
@@ -173,6 +177,28 @@ function searchOutfits(req, res){
                 "type": "terms",
                 "field": "sex",
                 "domain": { "blockChildren" : "content_type:parentDocument" }
+            }, 
+            "texture" : {
+                "type": "terms",
+                "field": "attr_texture",
+                "domain": { "blockChildren" : "content_type:parentDocument" },
+                "facet": {
+                    "colors" : {
+                        "type": "terms",
+                        "field": "attr_color"
+                        }
+                    }
+            }, 
+            "fabric" : {
+                "type": "terms",
+                "field": "attr_fabric",
+                "domain": { "blockChildren" : "content_type:parentDocument" },
+                "facet": {
+                    "colors" : {
+                        "type": "terms",
+                        "field": "attr_color"
+                        }
+                    }
             }
       }
     }
@@ -219,7 +245,6 @@ function searchOutfits(req, res){
     
                     if (validFilterFieldKeys.indexOf(key) != -1){
                         validKeysOfFilterItem.push(key);
-                       
                     }
     
                 });
