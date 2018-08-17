@@ -273,7 +273,6 @@ function searchOutfits(req, res){
     
                 fq += fqInner;
     
-    
             }
     
             fq += ")"

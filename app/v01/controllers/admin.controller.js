@@ -137,7 +137,8 @@ function getSearchItem(req, res){
             // Find some documents
             collection.find(
                 {$and : [
-                    {"isValidated" : false}, 
+                    {"isValidated" : false},
+                    {"owner" : "deepfashion"},
                     {$or: [
                         {lockTime : {$exists: false}},
                         {lockTime:  {$lt: new Date((new Date())-1000*60*60*24)}}
@@ -153,7 +154,7 @@ function getSearchItem(req, res){
                 res.json(docs);
 
                 if (docs.length > 0){
-                    collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                    //collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
                 }
 
                 db.close();
@@ -191,8 +192,10 @@ function approveSearchItem(req, res){
 
             res.json(result);
 
-            issueValidatedMsg(searchItem);
-
+            if (!result.ops[0].isSetTrainOnly){
+                issueValidatedMsg(searchItem);
+            }
+            
             db.close();
             
         });
