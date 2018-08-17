@@ -154,7 +154,7 @@ function getSearchItem(req, res){
                 res.json(docs);
 
                 if (docs.length > 0){
-                    //collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                    collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
                 }
 
                 db.close();
