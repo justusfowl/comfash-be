@@ -249,7 +249,10 @@ function getSearchItem(req, res){
 function approveSearchItem(req, res){
 
     let searchItem = req.body.searchItem;
+    let userId = req.auth.userId;
+
     searchItem["isValidated"] = true;
+    searchItem["userIdHasValidated"] = userId;
 
     MongoClient.connect(url, function(err, db) {
 
