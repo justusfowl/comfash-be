@@ -121,10 +121,95 @@ function hb(req, res){
 
 }
 
+function getGroupLabelsInfo(req, res){
+
+    try{
+
+        let flagIsValidated;
+
+        if (req.query.isValidated){
+            flagIsValidated = JSON.parse((req.query.isValidated).toLowerCase()); 
+        }else{
+            flagIsValidated = false;
+        }
+        
+        let label = req.query.attr_category || false;
+
+        let filterArray = [
+
+            {"$match": { "isValidated": { "$eq": flagIsValidated } } },
+            {"$unwind" :  "$_childDocuments_" },
+            {"$group" : {"_id" : {"label": "$_childDocuments_.attr_category", 
+             "attr_type": "$_childDocuments_.attr_type"}, "total" : {"$sum" : 1}, 
+             "ids" : {"$addToSet" : "$id"}}},
+             {"$project" : {"_id" : 1, "label" : "$_id.label", "attr_type" : "$_id.attr_type", 
+                 "total": 1}},
+                {"$sort" : {"label": 1}}
+        ];
+
+        if (label){
+            filterArray.push({ "$match": { "attr_type": { "$eq": 'clothing' }, "label": { "$eq": label } } });
+        }else{
+            filterArray.push({ "$match": { "attr_type": { "$eq": 'clothing' } } });
+        }
+
+        MongoClient.connect(url, function(err, db) {
+
+            if (err) throw err;
+            console.log("Database created!");
+
+            let dbo = db.db("cfdata");
+
+            // Get the documents collection
+            const collection = dbo.collection('inspiration');
+
+            // Find some documents
+            collection.aggregate(
+                filterArray
+            ).toArray(function(err, docs) {
+                
+                console.log("Found the following records");
+                console.log(docs);
+
+                res.json(docs);
+
+                if (docs.length > 0){
+                    // collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                }
+
+                db.close();
+                
+            });
+    
+          });
+    }
+    catch(err){
+        console.log(err)
+        res.send(500, "Error")
+    }
+
+}
 
 function getSearchItem(req, res){
 
     try{
+
+        let filterArray = [];
+
+        filterArray.push({"isValidated" : false});
+        filterArray.push({"owner" : "deepfashion"});
+        filterArray.push( {$or: [
+            {lockTime : {$exists: false}},
+            {lockTime:  {$lt: new Date((new Date())-1000*60*60*24)}}
+            ]
+        });
+
+        let attr_category = req.query.attr_category || false;
+
+        if (attr_category){
+            filterArray.push({"_childDocuments_" : {$elemMatch : {"attr_category" : attr_category }}});
+        }
+
         MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
@@ -136,16 +221,7 @@ function getSearchItem(req, res){
             const collection = dbo.collection('inspiration');
             // Find some documents
             collection.find(
-                {$and : [
-                    {"isValidated" : false},
-                    {"owner" : "deepfashion"},
-                    {$or: [
-                        {lockTime : {$exists: false}},
-                        {lockTime:  {$lt: new Date((new Date())-1000*60*60*24)}}
-                        ]
-                    }
-                
-                ]}
+                {$and : filterArray}
             ).limit(1).toArray(function(err, docs) {
                 
                 console.log("Found the following records");
@@ -154,7 +230,7 @@ function getSearchItem(req, res){
                 res.json(docs);
 
                 if (docs.length > 0){
-                    collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                    // collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
                 }
 
                 db.close();
@@ -271,4 +347,4 @@ function rejectSearchItem(req, res){
 
 }
 
-module.exports = { hb, addCrawlSession, uploadImageMw, getSearchItem, approveSearchItem, rejectSearchItem};
+module.exports = { hb, addCrawlSession, uploadImageMw, getSearchItem, approveSearchItem, rejectSearchItem, getGroupLabelsInfo};

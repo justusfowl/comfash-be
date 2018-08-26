@@ -26,4 +26,8 @@ router.route('/searchmeta/metadata')
 
     .get(searchCtrl.getSearchMetaData)
 
+router.route('/searchmeta/grouplabels')
+
+    .get(adminCtrl.getGroupLabelsInfo)
+
 module.exports = router;
