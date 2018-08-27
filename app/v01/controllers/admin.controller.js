@@ -135,16 +135,21 @@ function getGroupLabelsInfo(req, res){
         
         let label = req.query.attr_category || false;
 
-        let filterArray = [
+        let sorting = {};
+        let sortBy = req.query.sortby ||  "label";
 
+        let sortDirection = parseInt(req.query.sort) || 1;
+
+        sorting[sortBy] = sortDirection;
+
+        let filterArray = [
             {"$match": { "isValidated": { "$eq": flagIsValidated } } },
             {"$unwind" :  "$_childDocuments_" },
             {"$group" : {"_id" : {"label": "$_childDocuments_.attr_category", 
              "attr_type": "$_childDocuments_.attr_type"}, "total" : {"$sum" : 1}, 
              "ids" : {"$addToSet" : "$id"}}},
-             {"$project" : {"_id" : 1, "label" : "$_id.label", "attr_type" : "$_id.attr_type", 
-                 "total": 1}},
-                {"$sort" : {"label": 1}}
+             {"$project" : {"_id" : 1, "label" : "$_id.label", "attr_type" : "$_id.attr_type","total": 1}},
+                {"$sort" : sorting}
         ];
 
         if (label){
@@ -167,15 +172,13 @@ function getGroupLabelsInfo(req, res){
             collection.aggregate(
                 filterArray
             ).toArray(function(err, docs) {
+
+                if (err) throw err;
                 
                 console.log("Found the following records");
                 console.log(docs);
 
                 res.json(docs);
-
-                if (docs.length > 0){
-                    // collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
-                }
 
                 db.close();
                 
@@ -223,6 +226,8 @@ function getSearchItem(req, res){
             collection.find(
                 {$and : filterArray}
             ).limit(1).toArray(function(err, docs) {
+
+                if (err) throw err;
                 
                 console.log("Found the following records");
                 console.log(docs);
@@ -230,7 +235,7 @@ function getSearchItem(req, res){
                 res.json(docs);
 
                 if (docs.length > 0){
-                    collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                    // collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
                 }
 
                 db.close();
