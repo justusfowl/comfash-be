@@ -31,4 +31,12 @@ router.route('/searchmeta/grouplabels')
 
     .get(adminCtrl.getGroupLabelsInfo)
 
+router.route("/searchmeta/labelcrawl")
+
+    .post(VerifyToken.verifyToken, VerifyToken.successAuth, adminCtrl.issueCrawlRequest)
+
+router.route("/searchmeta/labelcrawl/grouplabels")
+
+    .get(VerifyToken.verifyToken, VerifyToken.successAuth, adminCtrl.getCrawledLabelsInfo)
+
 module.exports = router;
