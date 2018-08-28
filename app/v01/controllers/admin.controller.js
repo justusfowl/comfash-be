@@ -295,7 +295,7 @@ function getSearchItem(req, res){
                 res.json(docs);
 
                 if (docs.length > 0){
-                    collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
+                   collection.update({"id" : docs[0].id}, {$set: { lockTime: new Date() } })
                 }
 
                 db.close();
@@ -361,40 +361,52 @@ function issueCrawlRequest(req, res){
 
 function approveSearchItem(req, res){
 
-    let searchItem = req.body.searchItem;
-    let userId = req.auth.userId;
+    try{
 
-    searchItem["isValidated"] = true;
-    searchItem["userIdHasValidated"] = userId;
+        let searchItem = req.body.searchItem;
+        let userId = req.auth.userId;
 
+        searchItem["isValidated"] = true;
+        searchItem["userIdHasValidated"] = userId;
 
+        if (searchItem._id){
+            delete searchItem._id
+        }
 
-    MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(url, function(err, db) {
 
-        if (err) throw err;
-        console.log("Database connected!");
+            if (err) throw err;
+            console.log("Database connected!");
 
-        let dbo = db.db("cfdata");
+            let dbo = db.db("cfdata");
 
-        // Get the documents collection
-        const collection = dbo.collection('inspiration');
-        // Find some documents
-        collection.replaceOne({"id" : searchItem.id}, searchItem ,function(err, result) {
-            
-            console.log("Item approved and replaced");
-            console.log(result);
+            // Get the documents collection
+            const collection = dbo.collection('inspiration');
+            // Find some documents
+            collection.replaceOne({"id" : searchItem.id}, searchItem ,function(err, result) {
 
-            res.json(result);
+                if (err) throw err;
+                
+                console.log("Item approved and replaced");
+                console.log(result);
 
-            if (!result.ops[0].isSetTrainOnly){
-                issueValidatedMsg(searchItem);
-            }
-            
-            db.close();
-            
+                res.json(result);
+
+                if (!result.ops[0].isSetTrainOnly){
+                    issueValidatedMsg(searchItem);
+                }
+                
+                db.close();
+                
+            });
+
         });
 
-      });
+    }catch(err){
+        res.send(500, "An error occured validating the image.");
+        config.logger.error(error);
+
+    }
 }
 
 
