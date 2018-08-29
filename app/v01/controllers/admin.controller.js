@@ -179,6 +179,7 @@ function getGroupLabelsInfo(req, res){
         }
         
         let label = req.query.attr_category || false;
+        let attrType = req.query.attr_type ||  "clothing";
 
         let sorting = {};
         let sortBy = req.query.sortby ||  "label";
@@ -198,9 +199,9 @@ function getGroupLabelsInfo(req, res){
         ];
 
         if (label){
-            filterArray.push({ "$match": { "attr_type": { "$eq": 'clothing' }, "label": { "$eq": label } } });
+            filterArray.push({ "$match": { "attr_type": { "$eq": attrType }, "label": { "$eq": label } } });
         }else{
-            filterArray.push({ "$match": { "attr_type": { "$eq": 'clothing' } } });
+            filterArray.push({ "$match": { "attr_type": { "$eq": attrType } } });
         }
 
         MongoClient.connect(url, function(err, db) {
