@@ -1,7 +1,5 @@
 var _ = require('lodash');
 var config = require ('./config');
-
-
 let translateObj = {
 
     "VOTE_OWNER" : {
@@ -48,8 +46,6 @@ let translateObj = {
 
             let target = this[targetKey];
             let content, headings; 
-
-            
             try {
                 headings = _.mapValues(target.notifyHeadings, function (value, key) { 
 
@@ -87,10 +83,7 @@ let translateObj = {
         catch(err){
             config.logger.info("translation does not contain any content for key: " + targetKey);
         }       
-    
     }
-
-
 }
 
 module.exports = translateObj;

@@ -1,14 +1,11 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
-const Op = Sequelize.Op;
 var _ = require('lodash');
-var socketCtrl = require('../socket/socket.controller');
 var userCtrl = require('./user.controller');
 var sessionConnector = require('../connectors/session.connector');
 var signalCtrl = require('./signal.controller');
 var translateObj = require ('../../config/translations');
 var util = require("../../util/util");
-
 var config = require("../../config/config");
 
 async function notifyVote(sessionId, userId) {
@@ -73,12 +70,10 @@ async function notifyVote(sessionId, userId) {
             }
         }
        
-
         return true;
        
     }
     catch (error) {
-        console.log(error);
         config.logger.error(error);
     }
 }
@@ -122,10 +117,6 @@ async function notifyCollectionCreate(senderId, collectionTitle, groupUsers) {
         };
 
         let messages = await issueMessage(msgOption);
-
-        if (messages){
-            console.log("messages true! :) ")
-        }
 
         // iterate over all receiverIds 
         for (var i=0; i<receiverIds.length; i++){
@@ -204,10 +195,6 @@ async function notifySessionCreate(senderId, sessionId) {
 
         let messages = await issueMessage(msgOption);
 
-        if (messages){
-            console.log("messages true! :) ")
-        }
-
         // iterate over all receiverIds 
         for (var i=0; i<receiverIds.length; i++){
 
@@ -236,7 +223,6 @@ async function notifySessionCreate(senderId, sessionId) {
        
     }
     catch (error) {
-        console.log(error);
         config.logger.error(error);
     }
 }
@@ -245,7 +231,6 @@ async function getMsgUserPerSession (sessionId) {
     
     return new Promise(
         (resolve, reject) => {
-
 
             var qryOption = { raw: true, replacements: [sessionId], type: models.sequelize.QueryTypes.SELECT}; 
 
@@ -309,14 +294,10 @@ async function issueMessage(msgOption) {
 
             models.tblmessages.bulkCreate(messages)
             .then(function(response){
-
-                console.log("relvant messages created"); 
-                
                 resolve(true);
                 return null;
             })
             .catch(function(error){
-                console.log(error);
                 config.logger.error(error);
                 reject (false);
                 
@@ -363,11 +344,9 @@ function list (req,res) {
         qryStr,
         qryOption
     ).then(messages => {
-
         res.json(messages);
-        console.log(messages)
     }).catch(error => {
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     })
 
 }
@@ -406,12 +385,10 @@ function updateMessageReadStatus(req, res){
         }, function(error) {
         res.send("message not found");
     }).catch(error => {
-        config.logger.error(error);  
+        config.handleUniversalError(error, res);
     });
 
 }
-
-
 
 module.exports = { 
     list, 

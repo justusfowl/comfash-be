@@ -9,16 +9,11 @@ function upsertTag(req, res){
     let tag = req.body.tag;
 
     const vote = models.tblvotes.upsert(tag).then(tag => {
-
-        console.log("tag saved"); 
         res.json(tag);
         
       })
       .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       })
 
 }
@@ -52,7 +47,6 @@ async function createTags(sessionId, tags) {
         
               })
               .catch(error => {
-                console.log(error);
                 config.logger.error(error);
                 reject (false)
               })
@@ -64,9 +58,6 @@ async function createTags(sessionId, tags) {
 
 
 function deleteTag(req, res){
-
-    console.log("HIER NOCH CHECKEN OB REQ.auth.userId write access auf das tag hat")
-
     models.tblvotes.destroy({
         where: {
             tagId: req.params.tagId

@@ -22,13 +22,11 @@ function predict_google (req, res) {
         .then(results => {
             const labels = results[0].labelAnnotations;
 
-            console.log('Labels:');
             labels.forEach(label => console.log(label.description));
             res.json(labels)
         })
         .catch(err => {
-            res.send(500, err);
-            console.error('ERROR:', err);
+            config.handleUniversalError(err, res);
         });
     
 }
@@ -48,10 +46,8 @@ function predict(req, res) {
   amqp.connect('amqp://' + config.mq.mqUser + ':' + config.mq.mqPassword + '@' + config.mq.mqServer + ':' + config.mq.mqPort, function (err, conn) {
 
       if (err){
-          console.log(err); 
-
-          res.send(500, err)
-          return;
+        config.handleUniversalError(err, res);
+        return;
       }
 
     conn.createChannel(function (err, ch) {
@@ -62,16 +58,6 @@ function predict(req, res) {
       ch.sendToQueue(simulations, new Buffer(JSON.stringify(input)));
 
       res.json({"message" : "ok"});
-      /*
-      ch.consume(results, function (msg) {
-          try{
-            res.send(msg.content.toString())
-          }catch(err){
-              console.log(err);
-          }
-        
-      }, { noAck: true });
-      */
     });
     setTimeout(function () { conn.close(); }, 500); 
     });

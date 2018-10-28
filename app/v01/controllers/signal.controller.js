@@ -77,15 +77,10 @@ function registerDevice(req, res){
         userId: userId,
         deviceToken: deviceToken
     }).then(device => {
-
-        console.log("device saved"); 
         res.json(device);
     })
     .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     })
 
 }

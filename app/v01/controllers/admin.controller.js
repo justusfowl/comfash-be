@@ -90,10 +90,7 @@ function addCrawlSession(req, res){
             
                     })
                     .catch(error => {
-                    // Ooops, do some error-handling
-                    console.log(error); 
-                    res.send(500, error);
-                    config.logger.error(error);
+                        config.handleUniversalError(error, res);
                     })
             }else{
                 let sessionId = crawlItemInfo.sessionId;
@@ -128,10 +125,7 @@ function getCrawledLabelsInfo(req, res){
         MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
-            console.log("Database created!");
-
             let dbo = db.db("cfdata");
-
             // Get the documents collection
             const collection = dbo.collection('inspiration');
 
@@ -148,8 +142,6 @@ function getCrawledLabelsInfo(req, res){
             ).toArray(function(err, docs) {
 
                 if (err) throw err;
-                
-                console.log(docs);
 
                 res.json(docs);
 
@@ -160,8 +152,7 @@ function getCrawledLabelsInfo(req, res){
         });
 
     }catch(err){
-        res.send(500, "Error in retrieving the crawled labels' info");
-        config.logger.error(error);
+        config.handleUniversalError(error, res, "Error in retrieving the crawled labels' info");
     }
 
 }
@@ -207,7 +198,6 @@ function getGroupLabelsInfo(req, res){
         MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
-            console.log("Database created!");
 
             let dbo = db.db("cfdata");
 
@@ -221,9 +211,6 @@ function getGroupLabelsInfo(req, res){
 
                 if (err) throw err;
                 
-                console.log("Found the following records");
-                console.log(docs);
-
                 res.json(docs);
 
                 db.close();
@@ -233,8 +220,7 @@ function getGroupLabelsInfo(req, res){
           });
     }
     catch(err){
-        config.logger.error(error);
-        res.send(500, "Error")
+        config.handleUniversalError(err, res, "Error");
     }
 
 }
@@ -254,8 +240,6 @@ function getSearchItem(req, res){
             ]
         });
 
-        
-
         if (queryMode == "pre"){
             filterArray.push({"owner" : "deepfashion"});
             let attr_category = req.query.attr_category || false;
@@ -272,13 +256,11 @@ function getSearchItem(req, res){
                 filterArray.push({"keywords" : keywords});
             }
         }
-        
 
         MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
-            console.log("Database created!");
-
+         
             let dbo = db.db("cfdata");
 
             // Get the documents collection
@@ -289,10 +271,7 @@ function getSearchItem(req, res){
             ).limit(1).toArray(function(err, docs) {
 
                 if (err) throw err;
-                
-                console.log("Found the following records");
-                console.log(docs);
-
+         
                 res.json(docs);
 
                 if (docs.length > 0){
@@ -306,8 +285,7 @@ function getSearchItem(req, res){
           });
     }
     catch(err){
-        console.log(err)
-        res.send(500, "Error")
+        config.handleUniversalError(err, res, "Error");
     }
 
 }
@@ -331,9 +309,8 @@ function issueCrawlRequest(req, res){
 
         amqp.connect('amqp://' + config.mq.mqUser + ':' + config.mq.mqPassword + '@' + config.mq.mqServer + ':' + config.mq.mqPort, function (err, conn) {
 
-            if (err){
-                console.log(err); 
-                return;
+            if (err){ 
+                throw Error(err);
             }
 
             conn.createChannel(function (err, ch) {
@@ -353,9 +330,7 @@ function issueCrawlRequest(req, res){
         });
 
     }catch(err){
-        res.send(500, "Please issue valid search phrases only");
-        config.logger.error(error);
-
+        config.handleUniversalError(err, res, "Please issue valid search phrases only");
     }
     
 }
@@ -377,7 +352,6 @@ function approveSearchItem(req, res){
         MongoClient.connect(url, function(err, db) {
 
             if (err) throw err;
-            console.log("Database connected!");
 
             let dbo = db.db("cfdata");
 
@@ -388,9 +362,6 @@ function approveSearchItem(req, res){
 
                 if (err) throw err;
                 
-                console.log("Item approved and replaced");
-                console.log(result);
-
                 res.json(result);
 
                 if (!result.ops[0].isSetTrainOnly){
@@ -404,31 +375,25 @@ function approveSearchItem(req, res){
         });
 
     }catch(err){
-        res.send(500, "An error occured validating the image.");
-        config.logger.error(error);
+        config.handleUniversalError(err, res, "An error occured validating the image");
 
     }
 }
-
-
 
 function issueValidatedMsg(searchItem){
     
   amqp.connect('amqp://' + config.mq.mqUser + ':' + config.mq.mqPassword + '@' + config.mq.mqServer + ':' + config.mq.mqPort, function (err, conn) {
 
-    if (err){
-        console.log(err); 
-        return;
-    }
+    if (err) throw err;
 
-  conn.createChannel(function (err, ch) {
+    conn.createChannel(function (err, ch) {
 
-    var validated = 'validated';
-    ch.assertQueue(validated, { durable: false });
-    
-    ch.sendToQueue(validated, new Buffer(JSON.stringify(searchItem)));
+        var validated = 'validated';
+        ch.assertQueue(validated, { durable: false });
+        
+        ch.sendToQueue(validated, new Buffer(JSON.stringify(searchItem)));
 
-  });
+    });
 
   setTimeout(function () { conn.close(); }, 1000); 
   });
@@ -461,7 +426,6 @@ function rejectSearchItem(req, res){
 
             dbo.collection("inspiration").remove({id: id}, function(err, result) {
               if (err) throw err;
-              console.log(result);
     
               res.json({"message" : "ok"});
     
@@ -469,13 +433,8 @@ function rejectSearchItem(req, res){
             });
           });
 
-        
-
       }).catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       });
 
 }

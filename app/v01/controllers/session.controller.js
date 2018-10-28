@@ -46,14 +46,14 @@ function list (req,res) {
             
         res.send("Sessions not found");
     }).catch(error => {
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     });
 
 }
 
 function create(req, res){
 
-    console.log(" HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS")
+    config.logger.warning("HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS");
 
     var resultFilename = req.file.filename;
 
@@ -101,8 +101,7 @@ function create(req, res){
                     height: resolution.height
                   }).save()
                   .then(resultingSession => {
-                    // you can now access the currently saved task with the variable anotherTask... nice!
-                    console.log("after save"); 
+
 
                     res.json(resultingSession);
 
@@ -114,16 +113,12 @@ function create(req, res){
             
                   })
                   .catch(error => {
-                    // Ooops, do some error-handling
-                    console.log(error); 
-                    res.send(500, error);
+                    config.handleUniversalError(error, res);
                   })
 
             })
             .catch(function (error) {
-                console.log(error); 
-                res.send(500, error);
-                config.logger.error(error);
+                config.handleUniversalError(error, res);
             });
     };
 
@@ -180,12 +175,11 @@ function getImageColors(input){
         getColors(resultFile).then(colors => {
             // `colors` is an array of color objects 
             let me = colors; 
-            console.log(me);
     
             let primColor = colors[0]._rgb; 
             
             let whiteColor = [255,255,255]; 
-            let darkColor = [61, 61, 61] //[51, 67, 75];
+            let darkColor = [61, 61, 61];
 
             let whiteContrast = contrast(primColor, whiteColor);
             let darkContrast = contrast(primColor, darkColor);
@@ -205,17 +199,11 @@ function getImageColors(input){
                 hexColorPrime : hexColorPrime,
                 hexColorFont : hexColorFont
             };
-
             resolve(input);
-    
         });
-    
       });
-    
       return promise;
-
 }
-
 
 function getImageMetaData(input){
 
@@ -225,7 +213,6 @@ function getImageMetaData(input){
         function (resolve, reject) {
 
             var dimensions = sizeOf(resultFile);
-             console.log(dimensions.width, dimensions.height);
 
              var resolution = {
                 width : dimensions.width, 
@@ -236,10 +223,7 @@ function getImageMetaData(input){
 
         }
     );
-
     return getMetaData;
-
-
 }
 
 
@@ -258,7 +242,6 @@ function getThumbnailImage(origFilePath, origFilename ){
                 .toFormat('jpeg')
                 .toFile(outputFile, function(err) {
                     if(err){
-                        console.log(err);
                         reject(err);
                     }else{
                         let output = {
@@ -293,14 +276,12 @@ function resizeImage(input){
                 .toFormat('jpeg')
                 .toFile(outputFile, function(err) {
                     if(err){
-                        console.log(err);
                         reject(err);
                     }else{
                         input["outputFile"] = outputFile;
                         resolve(input); 
                     }
                 }); 
-
         }
     );
 
@@ -312,8 +293,7 @@ function resizeImage(input){
  */
 function uploadImage(req, res){
 
-    console.log(" HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS")
-
+    config.logger.warning("HIER MUSS NOCH ÜBERPRÜFT WERDEN, DASS NUR DER OWNER ITEMS EINSTELLEN KANN ODER VORHER EINE GENEHMIGUNG ERTEILT WRERDEN MUSS")
     var imageSrc = req.body.src;
     var imagePurchaseTags, filterOption;
 
@@ -353,9 +333,7 @@ function uploadImage(req, res){
                     filterOption : filterOption
                   }).save()
                   .then(resultingSession => {
-                    
-                    console.log("after save"); 
-
+                
                     res.json(resultingSession);
 
                     let sessionId = resultingSession.sessionId; 
@@ -373,25 +351,16 @@ function uploadImage(req, res){
             
                   })
                   .catch(error => {
-                    // Ooops, do some error-handling
-                    console.log(error); 
-                    res.send(500, error);
-                    config.logger.error(error);
+                    config.handleUniversalError(err, res);
                   })
 
             })
             .catch(function (error) {
-                console.log(error); 
-                res.send(500, error);
-                config.logger.error(error);
+                config.handleUniversalError(error, res);
             });
-    
 }
 
-
 function deleteSession(req, res){
-
-    console.warn("HIER NOCH CHECKEN, OB BERECHTIGUNGEN VORLIEGEN")
 
     models.tblsessions.findAll({
         where: {
@@ -423,16 +392,14 @@ function deleteSession(req, res){
                 }
 
                 }, function(error) {
-                    config.logger.error(error);
-                    res.send("comment not found");
+                    config.handleUniversalError(error, res, "Session not found")
             });
 
         } else {
             res.send(401, "Sessions not found");
         }
         }, function(error) {
-        config.logger.error(error);
-        res.send("Sessions not found");
+            config.handleUniversalError(error, res, "Session not found");
     });
 
 }
@@ -447,9 +414,7 @@ function addSessionRelation(req, res){
         targetCollectionId: targetCollectionId,
         sourceSessionId: sourceSessionId,
         userId: userId
-    }).then(relation => {
-
-        console.log("relation saved");
+    }).then(relation => {;
 
         let responseObj = {
             "isMySession" : false, 
@@ -461,10 +426,7 @@ function addSessionRelation(req, res){
         
       })
       .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error);
-        config.logger.error(error);
-        res.send(500, error);
+        config.handleUniversalError(error, res);
       })
 
 }
@@ -508,8 +470,7 @@ function getSessionRelationInfo(req, res){
         return true;
 
     }catch(error){
-        res.send(500, "Server error retrieving sessionrelation information");
-        config.logger.error(error);
+        config.handleUniversalError(error, res, "Server error retrieving sessionrelation information");
     }
 
 }
@@ -526,8 +487,7 @@ function removeSessionRelation(req, res){
     }).then(function(session) {
             res.json({"message" : "ok"});
         }, function(error) {
-            config.logger.error(error);
-            res.send("something went wrong deleting sessionrelation");
+            config.handleUniversalError(error, res, "Something went wrong deleting sessionrelation");
     });
 
 }
@@ -571,7 +531,6 @@ function uploadCapturedShopSession (req, res){
         dbo.collection("shopSession").insert(shopSession, function(err, result) {
             
         if (err) throw err;
-        console.log(result);
 
         res.json({"message" : "ok"});
 
@@ -580,9 +539,7 @@ function uploadCapturedShopSession (req, res){
     });
     
     }catch(err){
-        config.logger.error(err);
-        console.log(err);
-        res.send(500, "something went wrong uploading the shop session");
+        config.handleUniversalError(err, res, "Something went wrong");
     }
 }
 

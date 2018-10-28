@@ -1,11 +1,6 @@
-var Joi = require('joi');
-
-// require and configure dotenv, will load vars in .env in PROCESS.ENV
-require('dotenv').config();
-
 var logger = require('../../logger');
-
 var versiony = require('versiony');
+require('dotenv').config();
 
 let env = (process.env.NODE_ENV).toLowerCase() || 'development'; 
 
@@ -29,7 +24,6 @@ else if (env == 'production'){
 }else{
   port = 9999;
 }
-
 
 const config = {
     logger : logger.logger,
@@ -98,6 +92,17 @@ const config = {
       mqUser: process.env.MQ_USER,
       mqPassword: process.env.MQ_PASSWORD,
       mqPort: process.env.MQ_PORT
+    },
+    handleUniversalError : function (err, res=null, errorMsg=""){
+      logger.error(err, errorMsg);
+
+      if (res){
+        if(errorMsg != ""){
+          res.send(500, errorMsg);
+        }else{
+          res.send(500, err);
+        }
+      }
     }
   };
   

@@ -169,13 +169,7 @@ async function getTrendingItems (options, target) {
             let userId = options.userId; 
             let limit = options.limit;
             let skip = options.skip;
-
-            /*
-            let limit = parseInt(req.query.limit) || 10; 
-            let skip = parseInt(req.query.skip) || 0;
-            */
             var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
-
             let qryStr;
 
             if (options.flagUserActivity){

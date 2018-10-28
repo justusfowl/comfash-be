@@ -20,8 +20,7 @@ function create(req, res){
         res.json({"message" : "complaint received"});
       })
       .catch(error => {
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       })
 
 }

@@ -1,7 +1,5 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
-const Op = Sequelize.Op;
-
 var config = require("../../config/config");
 
 
@@ -31,7 +29,7 @@ function listCommentForSession (req,res) {
         res.json(compareHist);
 
     }).catch(error => {
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     })
 
 }
@@ -51,10 +49,7 @@ function create(req, res){
         res.json(anotherTask);
       })
       .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       })
 
 }
@@ -75,10 +70,7 @@ function deleteItem(req, res){
             
         res.send("comment not found");
     }).catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       });
 }
 

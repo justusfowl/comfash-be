@@ -1,12 +1,9 @@
 var models  = require('../models');
-
 var config = require("../../config/config");
-
 
 function listCompareHist (req,res) {
 
     let userId = req.auth.userId; 
-
 
     var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
     
@@ -24,10 +21,7 @@ function listCompareHist (req,res) {
         res.json(compareHist);
 
     }).catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       });
 
 }
@@ -48,10 +42,7 @@ function upsertCompareHist(req, res){
         res.json(comparehist);
         
       }).catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       })
 
 }
@@ -77,10 +68,7 @@ function deleteComparehist(req, res){
             
         res.send("comparehist not found");
     }).catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        res.send(500, error);
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
       })
 }
 

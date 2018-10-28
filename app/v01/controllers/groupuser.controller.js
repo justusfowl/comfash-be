@@ -4,7 +4,6 @@ const Op = Sequelize.Op;
 var _ = require("lodash");
 var messageCtrl = require('../controllers/message.controller');
 var collectionConnector = require('../connectors/collection.connector');
-
 var config = require("../../config/config");
 
 function getWhereInQryString(reqGroupUsers, isInFlag){
@@ -163,9 +162,7 @@ async function bulkInsertGroupUsers (ownerUserId, collectionId, addUsersSharedWi
                     
                     })
                     .catch(function(error){
-                        console.log(error);
-                        res.send(500, error);
-                        config.logger.error(error);
+                        config.handleUniversalError(error, res);
                     })
             }else{
                 reject(groupUsers)
@@ -190,8 +187,6 @@ async function deltaLoadGroupUsers(collectionId, authorId, usersSharedWith){
     let addedGroupUsers = await bulkInsertGroupUsers(authorId, collectionId, addUsersSharedWith, false);
     
     return addedGroupUsers;
-    
-
 }
 
 

@@ -15,10 +15,6 @@ function getLimitOffsetForQryStr(req){
 
 }
 
-
-  
-module.exports = {
-    
+module.exports = {    
     getLimitOffsetForQryStr
-
 };

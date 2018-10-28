@@ -2,13 +2,9 @@
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var bcrypt = require('bcryptjs');
 const config = require('../../config/config');
-
 var models = require('../models');
-
-const uuidv1 = require('uuid/v1');
-                                                                                                                                                                                         
+const uuidv1 = require('uuid/v1');                                                                                                                                                           
 const https = require('https');
-
 var crypto = require('crypto');
 
 function getFacebookServerToken(req, res, next){
@@ -26,19 +22,12 @@ function getFacebookServerToken(req, res, next){
     };
     
     var request = https.request(options, (response) => {
-      console.log('statusCode:', response.statusCode);
-      console.log('headers:', response.headers);
 
       response.on('data', function(data) {
-        console.log("Response:");
-        console.log(JSON.parse(data));
-
         var resData = JSON.parse(data);
-
         req["auth_fb"] = {
            "server_token" :  resData.access_token
         }
-
         next();
 
       });
@@ -46,11 +35,10 @@ function getFacebookServerToken(req, res, next){
     });
     
     request.on('error', (e) => {
-      console.error(e);
+      config.logger.error(e);
     });
     
     request.end();
-
 
 }
 
@@ -60,7 +48,6 @@ function validateFacebookClientToken(req, res, next){
 
     var path = "/debug_token?input_token=" + fbToken + "&access_token=" + req.auth_fb.server_token;
         
-    
     var options = {
       hostname: 'graph.facebook.com',
       port: 443,
@@ -72,12 +59,8 @@ function validateFacebookClientToken(req, res, next){
     };
     
     var request = https.request(options, (response) => {
-      console.log('statusCode:', response.statusCode);
-      console.log('headers:', response.headers);
 
       response.on('data', function(data) {
-        console.log("Response:");
-        console.log(JSON.parse(data));
 
         var resData = JSON.parse(data);
 
@@ -96,7 +79,7 @@ function validateFacebookClientToken(req, res, next){
     });
     
     request.on('error', (e) => {
-      console.error(e);
+      config.logger.error(e);
     });
     
     request.end();
@@ -134,31 +117,20 @@ function getAuth0AccessToken(req, res){
     };
     
     var request = https.request(options, (response) => {
-      console.log('statusCode:', response.statusCode);
-      console.log('headers:', response.headers);
-
-
       response.on('data', function(data) {
-        console.log("Response:");
-        console.log(JSON.parse(data));
-
-        res.json(JSON.parse(data));
-
+          res.json(JSON.parse(data));
       });
 
     });
     
     request.on('error', (e) => {
-      console.error(e);
-      res.send(500, e);
+        config.handleUniversalError(e, res);
     });
     
     request.write(postData);
     request.end();
     
 }
-
-
 
 function checkLogin(req, res){
 
@@ -202,7 +174,6 @@ function checkLogin(req, res){
             throw new Error("No user could be found");
         }
     }).catch(error => {
-        // Ooops, do some error-handling
         global.config.logger.error(error.stack);
         res.send(403, "Either username or password invalid");
       })
@@ -230,8 +201,6 @@ function registerUser ( req, res ){
             userCreatedAt : new Date()
         }).save()
           .then(resultUser => {
-            // you can now access the currently saved task with the variable anotherTask... nice!
-            console.log("registering new user successful: ", resultUser.userId); 
 
             let resp = {
                 "cf_id" : resultUser.userId
@@ -240,10 +209,7 @@ function registerUser ( req, res ){
             res.json(resp);
 
           })
-          .catch(error => {
-            // Ooops, do some error-handling
-            console.log(error);
-    
+          .catch(error => {    
             if (error.original.errno == 1062){
                 res.send(500, "Your user-ID has already been used");
             }else{
@@ -253,10 +219,6 @@ function registerUser ( req, res ){
     }else{
         res.send(401, "Unauthorized");
     }
-
 }
-
-// function authorizeRead()
-
 
 module.exports = { checkLogin, registerUser, getFacebookServerToken, validateFacebookClientToken, getAuth0AccessToken };

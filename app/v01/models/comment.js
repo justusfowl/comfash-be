@@ -40,12 +40,6 @@ module.exports = (sequelize, DataTypes) => {
     timestamps : false
 });
 
-/*
-  User.associate = function(models) {
-    models.User.hasMany(models.Task);
-  };
-*/
-
   return comment;
 };
 

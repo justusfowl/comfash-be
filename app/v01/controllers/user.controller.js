@@ -67,14 +67,10 @@ function upsertProfileAvatar (req, res){
         userId: req.auth.userId, 
         userAvatarPath : "/a/" + imageInfo.fileName
     }).then(user => {
-        console.log("user avatar saved"); 
         res.json(user);
         })
     .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error);
-        config.logger.error(error);
-        res.send(500, error);
+        config.handleUniversalError(error, res);
     })
 
 }
@@ -192,7 +188,6 @@ async function getUserInfo (userId) {
     return new Promise(
         (resolve, reject) => {
 
-
             var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
 
             let qryStr = 'SELECT u.userId, u.userName, u.userAvatarPath FROM \
@@ -220,7 +215,6 @@ async function getUserStats (userId) {
     return new Promise(
         (resolve, reject) => {
 
-
             var qryOption = { raw: true, replacements: [userId], type: models.sequelize.QueryTypes.SELECT}; 
 
             let qryStr = 'SELECT count(*) as followerCnt FROM \
@@ -231,10 +225,7 @@ async function getUserStats (userId) {
                 qryStr,
                 qryOption
             ).then(userStats => {
-
                 resolve(userStats[0]);
-                
-
             }).catch(error => {
                 config.logger.error(error);
             })
@@ -270,14 +261,7 @@ function getUserProfileBase (req,res) {
         }else{
             res.json([])
         }
-        
-
     })();
-
-
 }
-
-
-
 
 module.exports = { searchUser, listGroups, upsertProfileAvatar, getUserInfo, getUserProfileBase, toggleFollower};

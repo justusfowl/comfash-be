@@ -3,8 +3,10 @@ var Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 var config = require("../../config/config");
 var _ = require('lodash');
-
 var MongoClient = require('mongodb').MongoClient;
+const request = require('request');
+const http = require("http");
+var solr = require('solr-client');
 
 var url = "mongodb://" + 
 config.mongodb.username + ":" + 
@@ -12,12 +14,6 @@ config.mongodb.password + "@" +
 config.mongodb.host + ":" + config.mongodb.port +"/" + 
 config.mongodb.database + "?authSource=" + config.mongodb.database + "&w=1" ;
 
-
-const request = require('request');
-const http = require("http")
-// HIER NOCH AUSLAGERNIN CONFIG 
-
-var solr = require('solr-client');
 
 function searchUser (req,res) {
 
@@ -58,17 +54,13 @@ function searchUser (req,res) {
 function getSearchMetaData(req, res){
     try{
         MongoClient.connect(url, function(err, db) {
-
-            if (err) throw err;
-            
+            if (err) throw err;            
             let dbo = db.db("cfdata");
-
             // Get the documents collection
             const collection = dbo.collection('meta');
             // Find some documents
 
             // get meta data for version 1.0
-
             collection.find({"version" : 1}).toArray(function(err, docs) {
 
                 if (docs.length > 0){
@@ -76,18 +68,12 @@ function getSearchMetaData(req, res){
                 }else{
                     res.send(500, "Error, meta version could not be found")
                 }
-
                 db.close();
-                
-                
             });
-    
-            
           });
     }
     catch(err){
-        console.log(err)
-        res.send(500, "Error")
+        config.handleUniversalError(err, res);
     }
 }
 
@@ -109,9 +95,6 @@ function searchOutfits(req, res){
         
         let searchTerm = req.query.searchTerm;
         let searchLang = req.query.searchLang;
-
-
-
         let filters;
 
         try{
@@ -122,9 +105,6 @@ function searchOutfits(req, res){
         
         let top = req.query.top || 10;
         let skip = req.query.skip || 0;
-
-        
-
         let qryString;
 
         if (validSearchLang.indexOf(searchLang) == -1){
@@ -202,8 +182,6 @@ function searchOutfits(req, res){
             }
       }
     }
-
-
 
        for (var i=0; i<filters.length; i++){
 
@@ -295,17 +273,15 @@ function searchOutfits(req, res){
         }, function(error, response, responseBody){
 
             if (error){
-                config.logger.error("Error posting to search engine");
-                res.send(500, "Error posting to search engine")
+                config.handleUniversalError(error, res, "Error posting to search engine");
+                return;
             }
-            console.log(responseBody);
             res.json(responseBody)
         });
 
        
     }catch(err){
-        config.logger.error("Error in the searchOutfits part");
-        config.logger.error(err);
+        config.handleUniversalError(err, res, "Error posting to search engine");
     }
 }
 
@@ -322,7 +298,6 @@ function outfitMoreDetails(req, res){
             var dbo = db.db(config.mongodb.database);
             dbo.collection("inspiration").find({id: outfitId}).toArray(function(err, result) {
               if (err) throw err;
-              console.log(result);
     
               if (result.length == 1){
                 res.json(result[0]);
@@ -332,15 +307,13 @@ function outfitMoreDetails(req, res){
                   }else{
                     res.send(500, "multiple entries available, check database")
                   }
-                
               }
-    
               db.close();
             });
           });
     
     }catch(err){
-        res.send(500, "Error connecting to mongodb")
+        config.handleUniversalError(err, res, "Error connecting to mongodb");
     }
    
 

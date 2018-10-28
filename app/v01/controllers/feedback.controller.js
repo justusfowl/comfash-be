@@ -4,7 +4,6 @@ const multer = require('multer');
 var config  = require('../../config/config');
 var hash = require ('string-hash');
 var fs = require('fs');
-
 var config = require("../../config/config");
 var signalCtrl = require('./signal.controller');
 
@@ -12,7 +11,6 @@ function submitFeedback(req, res){
 
     let userId = req.auth.userId; 
     let feedbackText = req.body.feedbackText;
-
     var screenShotData = req.body.screenShotData;
 
     if (screenShotData){
@@ -24,10 +22,10 @@ function submitFeedback(req, res){
     
         fs.writeFile(resultPath, data, 'base64', function(err) {
             if (err){
-                console.log("File image write error", err);
+                config.handleUniversalError(err, null, "File image write error");
             }
     
-            const feedback = models.tblfeedbacks.build({
+            models.tblfeedbacks.build({
                 userId : userId, 
                 feedbackText : feedbackText,
                 screenshotPath : fileName, 
@@ -39,15 +37,12 @@ function submitFeedback(req, res){
         
               })
               .catch(error => {
-                // Ooops, do some error-handling
-                console.log(error); 
-                res.send(500, error);
-                config.logger.error(error);
+                config.handleUniversalError(error, res);
               })
     
         });
     }else{
-        const feedback = models.tblfeedbacks.build({
+        models.tblfeedbacks.build({
             userId : userId, 
             feedbackText : feedbackText,
             feedbackStatus : 0
@@ -58,32 +53,24 @@ function submitFeedback(req, res){
 
             (async () => {
               // send notification to owner of the session
-  
               await notifyFeedback();
   
           })();
   
-          return null;
-          
+            return null;
     
           })
           .catch(error => {
-            // Ooops, do some error-handling
-            console.log(error); 
-            res.send(500, error);
-            config.logger.error(error);
+            config.handleUniversalError(error, res);
           })
     }
-  
 }
-
-
 
 async function notifyFeedback() {
 
   try {
 
-      // notify uli
+      // notify admin
       let userDevices = await signalCtrl.getUserDevices("a88dff2fc6698f332c8bff88c0e806d4");
 
       var message = {
@@ -102,16 +89,12 @@ async function notifyFeedback() {
           signalCtrl.sendNotification(message);
       }
      
-
       return true;
      
   }
   catch (error) {
-      console.log(error);
-      config.logger.error(error);
+      config.handleUniversalError(error);
   }
 }
-
-
 
 module.exports =   { submitFeedback };

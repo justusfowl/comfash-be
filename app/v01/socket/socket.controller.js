@@ -53,9 +53,6 @@ function getSocketsForUserId(userId){
         
       });
 
-      console.log("getSocketsforUser:" + userId)
-      console.log(results)
-
       return results;
 
 }
@@ -132,33 +129,6 @@ function handleConnect (socket){
             
             console.log(error)
     });
-    
-    /*
-	socket.on('groupjoin', function(rooms) {
-
-		console.log("Trying to join room");
-
-		rooms.forEach(element => {
-			socket.join('group_'+element.groupId.toString());
-		});
-		
-		socket.emit('msg', "joining you to groups in comfash");
-
-	});
-
-	socket.emit('msg', "connected to comfash");
-
-	socket.on('con', function (data){
-		console.log(data);
-	});
-
-	socket.on('msgGroup')
-
-	socket.emit('connection', 'welcome to comfash');
-
-
-        */
-    console.log('a user CONNECTED: ' + socket);
     
     socket.on('disconnect', handleDisconnect);
 }

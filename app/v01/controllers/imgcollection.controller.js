@@ -1,14 +1,9 @@
 var models  = require('../models');
 var Sequelize = require("sequelize");
-const Op = Sequelize.Op;
-
-var socketCtrl = require('../socket/socket.controller');
 var messageCtrl = require('../controllers/message.controller');
 var groupUserCtrl = require('../controllers/groupuser.controller');
 var _ = require("lodash");
-
 var collectionConnector = require('../connectors/collection.connector');
-
 var config = require("../../config/config");
 
 
@@ -42,7 +37,7 @@ function listMyCollections (req,res) {
         res.json(myCollections);
 
     }).catch(error => {
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     })
 
 }
@@ -354,15 +349,13 @@ function listQry (req,res) {
 
         if (isSessionRequested){
             res.json(allSessions);
-            console.log(allSessions)
 
         }else{
             res.json(result);
-            console.log(result);
         }
 
     }).catch(error => {
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     })
 }
 
@@ -418,14 +411,12 @@ function listDetail (req,res) {
     
             collectionDetails["sharedWithUsers"] = sharedWithUsers;
             res.json(collectionDetails);
-            console.log(collectionDetails)
         }else{
             res.json([]);
-            console.log([])
         }
        
     }).catch(error => {
-        config.logger.error(error);
+        config.handleUniversalError(error, res);
     })
 }
 
@@ -457,27 +448,21 @@ function update(req, res){
                     {returning: true, where: {collectionId: collectionId} }
                 ).then(collection => {
             
-                    console.log("collection updated"); 
                     (async () => {
 
                         let addedGroupUsers = await groupUserCtrl.deltaLoadGroupUsers(collectionId, userId, usersSharedWith);
 
                         res.json(collection);
 
-                    
                         let collectionInfo = await collectionConnector.getCollectionInfo(collectionId);
                         await messageCtrl.notifyCollectionCreate(userId, collectionInfo[0].collectionTitle, addedGroupUsers)
                     })();
-                    
                     
                     return null;
                     
                 })
                 .catch(error => {
-                    // Ooops, do some error-handling
-                    console.log(error);
-                    config.logger.error(error);
-                    res.send(500, error);
+                    config.handleUniversalError(error, res);
                 })
 
 
@@ -489,7 +474,6 @@ function update(req, res){
         }
 
         return true;
-        
    
     })();
 
@@ -529,10 +513,7 @@ function create(req, res){
           return null;
       })
       .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error); 
-        config.logger.error(error);
-        res.send(500, error);
+        config.handleUniversalError(error, res);
       })
 
 }
@@ -552,11 +533,10 @@ function deleteItem(req, res){
         } else {
             res.send(401, "User not found");
         }
-        }, function(error) {
-            
+        }, function(error) {            
         res.send("User not found");
     }).catch(error => {
-        config.logger.error(error);  
+        config.handleUniversalError(error, res); 
     });
 
 }

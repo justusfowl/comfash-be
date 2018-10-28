@@ -30,10 +30,7 @@ function upsertVote(req, res){
         
       })
       .catch(error => {
-        // Ooops, do some error-handling
-        console.log(error);
-        config.logger.error(error);
-        res.send(500, error);
+        config.handleUniversalError(error, res);
       })
 
 }
