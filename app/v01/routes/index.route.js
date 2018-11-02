@@ -1,10 +1,9 @@
 var express             = require('express'); 
-
 var imgCollectionRoutes = require('./imgcollection.route.js');
 var userRoutes          = require('./user.route.js');
 var authRoutes          = require('./auth.route.js');
 var streamRoutes        = require('./stream.route.js');
-var complianceRoutes        = require('./compliance.route.js');
+var complianceRoutes    = require('./compliance.route.js');
 var auxRoutes        = require('./auxi.route.js');
 var devRoutes = require('./dev.route.js');
 var searchRoutes = require('./search.route.js');

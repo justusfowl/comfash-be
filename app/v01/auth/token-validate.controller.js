@@ -1,7 +1,6 @@
 var jwt = require('express-jwt');
 var jwks = require('jwks-rsa');
-const config = require('../../config/config');
-
+var config = require('../../config/config');
 
 var verifyToken = jwt({
   secret: jwks.expressJwtSecret({
@@ -10,11 +9,10 @@ var verifyToken = jwt({
       jwksRequestsPerMinute: 5,
       jwksUri: config.auth.jwksUri
   }),
-  aud: config.auth.auth0_audience, //'https://comfash.local:9999/api/v01',
+  aud: config.auth.auth0_audience,
   iss: config.auth.iss,
   algorithms: ['RS256']
 });
-
 
 var successAuth = function(req, res, next) {
   req["auth"] = {
@@ -23,5 +21,5 @@ var successAuth = function(req, res, next) {
   next();
 }
 
-
+// Middleware for verification of client-2-server JWT
 module.exports = { verifyToken, successAuth } ;

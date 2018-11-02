@@ -1,10 +1,5 @@
 var express         = require('express'); 
-var validate        = require('express-validation');
-var paramValidation  = require('../../config/validation');
-var config  = require('../../config/config');
 var authCtrl = require("../auth/auth.controller");
-
-
 
 var router = express.Router(); 
 

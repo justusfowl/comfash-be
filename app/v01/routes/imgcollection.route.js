@@ -1,7 +1,4 @@
 var express         = require('express'); 
-var validate        = require('express-validation');
-var paramValidation  = require('../../config/validation');
-
 var imgCollectionCtrl = require("../controllers/imgcollection.controller");
 var sessionCtrl = require("../controllers/session.controller");
 var commentCtrl = require("../controllers/comment.controller");
@@ -9,24 +6,17 @@ var voteCtrl = require ("../controllers/vote.controller");
 var comparehistCtrl = require("../controllers/comparehist.controller"); 
 var tagCtrl = require("../controllers/tag.controller");
 
-
-
 var router = express.Router(); 
 
 router.route('/')
 
-    //.get(imgCollectionCtrl.listQry)
-
     .post(imgCollectionCtrl.create)
 
 router.use('/room/:userId', function(req, res, next) {
-    console.log('Request URL:', req.originalUrl);
     next();
 }, function (req, res, next) {
-    console.log('Request Type:', req.method);
     next();
 });
-
 
 router.route('/room/:userId')
 

@@ -20,9 +20,7 @@ async function getSessionRelationInfo (userId, sessionId) {
 
             })
         }
-    );
-    
+    );   
 }
-
 
 module.exports =   { getSessionRelationInfo };

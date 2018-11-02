@@ -8,7 +8,6 @@ var router = express.Router();
 
 router.route('/resolveUrl')
 
-    // report and complain about an item
     .get(urlpreviewCtrl.resolveUrl);
 
 

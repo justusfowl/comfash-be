@@ -1,6 +1,5 @@
 var Joi = require('joi');
 
-
 const validationObj = {
 
     collection: {

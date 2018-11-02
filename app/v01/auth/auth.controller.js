@@ -1,5 +1,5 @@
 
-var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
+var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
 const config = require('../../config/config');
 var models = require('../models');
@@ -221,4 +221,6 @@ function registerUser ( req, res ){
     }
 }
 
+// Middleware to authenticate and validate client-2-server authentication as well as facebook inclusion
+// Also, registering an incoming, new user from auth0 is included
 module.exports = { checkLogin, registerUser, getFacebookServerToken, validateFacebookClientToken, getAuth0AccessToken };

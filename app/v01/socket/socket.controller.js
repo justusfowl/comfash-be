@@ -1,10 +1,5 @@
-
-var VerifyToken = require('../auth/token-validate.controller');
 var models = require('../models');
 var _ = require('lodash');
-
-var logger = require("../../../logger").logger;
-
 
 /**
  * Basic prefix of groups/rooms within the socket evironments

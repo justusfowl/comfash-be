@@ -1,5 +1,6 @@
 var logger = require('../../logger');
 var versiony = require('versiony');
+
 require('dotenv').config();
 
 let env = (process.env.NODE_ENV).toLowerCase() || 'development'; 
@@ -10,13 +11,12 @@ if (env == 'development'){
   port = process.env.PORT || 9999;
 
   versiony
-    .patch()                // will cause the minor version to be bumped by 1
-    .from('version.json')   // read the version from version.json
-    .to()                   // write the version to the source file (package.json)
-                            // with the minor part bumped by 1
-    .to('bower.json')       // apply the same version
-    .to('package.json')     // apply the same version
-    .end()                  // display info on the stdout about modified files
+    .patch()               
+    .from('version.json')   
+    .to()                   
+    .to('bower.json')       
+    .to('package.json')     
+    .end()
 
 }
 else if (env == 'production'){
